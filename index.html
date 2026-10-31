@@ -1,0 +1,2897 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab Maya IPAS SD - Gaya Gesek & Bidang Miring</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Nunito & Fredoka untuk tampilan ramah anak SD -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome 6 CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Nunito', 'sans-serif'],
+                        display: ['Fredoka', 'sans-serif'],
+                    },
+                    colors: {
+                        lab: {
+                            sky: '#E0F2FE',
+                            primary: '#0284C7',
+                            secondary: '#F59E0B',
+                            accent: '#10B981',
+                            purple: '#7C3AED',
+                            danger: '#EF4444'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: linear-gradient(135deg, #E0F2FE 0%, #FEF3C7 50%, #DCFCE7 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        h1, h2, h3, .font-heading {
+            font-family: 'Fredoka', sans-serif;
+        }
+        /* Custom Range Slider Ramah Anak & Layar Sentuh (IFP) */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 14px;
+            border-radius: 999px;
+            background: #CBD5E1;
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #0284C7;
+            border: 4px solid #ffffff;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+            cursor: pointer;
+            transition: transform 0.15s ease, background-color 0.15s ease;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+            background: #0369A1;
+        }
+        /* Animasi Mikro & Efek Kartu */
+        .btn-bounce:active {
+            transform: scale(0.95);
+        }
+        .floating-mascot {
+            animation: floatSlow 3.2s ease-in-out infinite;
+        }
+        @keyframes floatSlow {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-6px); }
+        }
+        .pulse-glow {
+            animation: pulseGlow 2s infinite;
+        }
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
+            50% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+        }
+        /* Flip Card / Concept Card */
+        .concept-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .concept-card:hover {
+            transform: translateY(-5px);
+        }
+        /* Konfeti Canvas Overlay */
+        #confettiCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 9999;
+        }
+        /* Pengaturan Cetak 1 Halaman A4 Rapi (@media print) */
+        @media print {
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .print-only {
+                display: block !important;
+            }
+            #phase-5 {
+                display: block !important;
+            }
+            #certificateArea {
+                border: 3px solid #0284C7 !important;
+                box-shadow: none !important;
+                padding: 16px !important;
+                margin: 0 !important;
+                width: 100% !important;
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body class="text-slate-800 selection:bg-sky-200">
+
+    <!-- Canvas Konfeti untuk Perayaan Misi & Kuis -->
+    <canvas id="confettiCanvas" class="no-print"></canvas>
+
+    <!-- Notifikasi Toast Melayang -->
+    <div id="toastContainer" class="fixed top-20 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none no-print"></div>
+
+    <!-- HEADER UTAMA & KONTROL SMARTBOARD (IFP) -->
+    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b-4 border-sky-400 shadow-md no-print">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-2">
+            <!-- Brand & Judul Lab -->
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-sky-500 to-blue-700 flex items-center justify-center text-white shadow-md">
+                    <i class="fa-solid fa-flask-vial text-2xl"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="px-2.5 py-0.5 text-xs font-extrabold uppercase tracking-wider bg-amber-100 text-amber-800 rounded-full border border-amber-300">IPAS SD Kelas 4 • Fase B</span>
+                        <span id="headerStudentBadge" class="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-bold bg-emerald-100 text-emerald-800 rounded-full">
+                            <i class="fa-solid fa-user-astronaut"></i> <span id="headerStudentName">Ilmuwan Cilik</span>
+                        </span>
+                    </div>
+                    <h1 class="text-lg sm:text-xl font-bold text-slate-800 leading-tight">Lab Maya: Gaya Gesek & Bidang Miring</h1>
+                </div>
+            </div>
+
+            <!-- Kontrol Audio, TTS, Reset, dan Layar Penuh -->
+            <div class="flex items-center gap-2">
+                <!-- Indikator Misi Selesai -->
+                <div class="hidden md:flex items-center gap-1.5 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold">
+                    <i class="fa-solid fa-trophy text-amber-500 text-sm"></i>
+                    <span>Misi Lab: <span id="headerMissionCount" class="text-sky-700 font-extrabold">0/3</span></span>
+                </div>
+
+                <!-- Tombol Suara Efek (Web Audio API) -->
+                <button id="btnToggleSound" onclick="toggleSound()" title="Nyalakan/Matikan Efek Suara" class="btn-bounce flex items-center gap-1.5 px-3 py-2 rounded-xl bg-sky-100 hover:bg-sky-200 text-sky-800 font-bold text-sm border border-sky-300 transition">
+                    <i id="iconSound" class="fa-solid fa-volume-high"></i>
+                    <span class="hidden sm:inline">Efek Suara</span>
+                </button>
+
+                <!-- Tombol Hentikan Suara Baca (TTS) -->
+                <button onclick="stopSpeech()" title="Hentikan Suara Profesor Cilik" class="btn-bounce px-3 py-2 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold text-sm border border-amber-300 transition">
+                    <i class="fa-solid fa-comment-slash"></i>
+                </button>
+
+                <!-- Tombol Fullscreen untuk Papan Interaktif Kelas (IFP) -->
+                <button onclick="toggleFullscreen()" title="Mode Layar Kelas (Fullscreen)" class="btn-bounce flex items-center gap-1.5 px-3 py-2 rounded-xl bg-purple-100 hover:bg-purple-200 text-purple-800 font-bold text-sm border border-purple-300 transition">
+                    <i id="iconFullscreen" class="fa-solid fa-expand"></i>
+                    <span class="hidden lg:inline">Layar Kelas</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- NAVIGASI 5 FASE PEMBELAJARAN MENDALAM (STEPPER) -->
+        <div class="bg-sky-50/80 border-t border-sky-200 px-2 py-2">
+            <div class="max-w-7xl mx-auto grid grid-cols-5 gap-1.5 sm:gap-3">
+                <button onclick="switchPhase(1)" id="nav-phase-1" class="phase-tab btn-bounce flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-2 px-2 rounded-xl font-bold text-xs sm:text-sm transition-all">
+                    <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-extrabold bg-white/80 shadow-sm">1</span>
+                    <span class="truncate">Pemantik & Hipotesis</span>
+                </button>
+                <button onclick="switchPhase(2)" id="nav-phase-2" class="phase-tab btn-bounce flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-2 px-2 rounded-xl font-bold text-xs sm:text-sm transition-all">
+                    <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-extrabold bg-white/80 shadow-sm">2</span>
+                    <span class="truncate">Meja Eksperimen</span>
+                </button>
+                <button onclick="switchPhase(3)" id="nav-phase-3" class="phase-tab btn-bounce flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-2 px-2 rounded-xl font-bold text-xs sm:text-sm transition-all">
+                    <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-extrabold bg-white/80 shadow-sm">3</span>
+                    <span class="truncate">Jurnal & Grafik LKPD</span>
+                </button>
+                <button onclick="switchPhase(4)" id="nav-phase-4" class="phase-tab btn-bounce flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-xl py-2 px-2 font-bold text-xs sm:text-sm transition-all">
+                    <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-extrabold bg-white/80 shadow-sm">4</span>
+                    <span class="truncate">Pojok Sains</span>
+                </button>
+                <button onclick="switchPhase(5)" id="nav-phase-5" class="phase-tab btn-bounce flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-xl py-2 px-2 font-bold text-xs sm:text-sm transition-all">
+                    <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-extrabold bg-white/80 shadow-sm">5</span>
+                    <span class="truncate">Kuis & Rapor</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- KONTEN UTAMA APLIKASI -->
+    <main class="max-w-7xl mx-auto px-3 sm:px-6 py-5 space-y-6">
+
+        <!-- BAR KARAKTER PROFESOR CILIK (ASISTEN SUARA INTERAKTIF) -->
+        <section class="bg-white rounded-3xl p-4 shadow-lg border-2 border-sky-300 flex flex-col sm:flex-row items-center gap-4 no-print">
+            <!-- SVG Maskot Profesor Cilik -->
+            <div class="relative flex-shrink-0 floating-mascot">
+                <svg class="w-20 h-20" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="60" cy="60" r="56" fill="#E0F2FE" stroke="#0284C7" stroke-width="4"/>
+                    <!-- Jas Lab -->
+                    <path d="M28 110 C28 84 92 84 92 110" fill="#FFFFFF" stroke="#0284C7" stroke-width="4"/>
+                    <path d="M50 88 L60 108 L70 88" fill="#38BDF8"/>
+                    <!-- Kepala -->
+                    <circle cx="60" cy="54" r="26" fill="#FDE68A" stroke="#B45309" stroke-width="3"/>
+                    <!-- Rambut Ilmuwan -->
+                    <path d="M32 48 C30 26 90 26 88 48 C82 36 38 36 32 48 Z" fill="#1E293B"/>
+                    <!-- Kacamata Lab -->
+                    <rect x="38" y="44" width="19" height="14" rx="5" fill="#FFFFFF" stroke="#0284C7" stroke-width="3"/>
+                    <rect x="63" y="44" width="19" height="14" rx="5" fill="#FFFFFF" stroke="#0284C7" stroke-width="3"/>
+                    <line x1="57" y1="51" x2="63" y2="51" stroke="#0284C7" stroke-width="3"/>
+                    <!-- Mata -->
+                    <circle cx="47.5" cy="51" r="3.5" fill="#0F172A"/>
+                    <circle cx="72.5" cy="51" r="3.5" fill="#0F172A"/>
+                    <!-- Senyum -->
+                    <path d="M51 65 Q60 73 69 65" stroke="#B45309" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+                </svg>
+                <span class="absolute -bottom-1 right-0 bg-emerald-500 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full shadow">AI Pemandu</span>
+            </div>
+
+            <!-- Balon Bicara Profesor Cilik -->
+            <div class="flex-1 text-center sm:text-left">
+                <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-1">
+                    <span class="font-heading font-bold text-sky-800 text-base">Profesor Bima Cilik</span>
+                    <span class="text-xs bg-sky-100 text-sky-700 px-2 py-0.5 rounded-full font-semibold">Tujuan Pembelajaran: Menganalisis pengaruh kekasaran permukaan & sudut kemiringan pada gerak benda</span>
+                </div>
+                <p id="mascotMessage" class="text-slate-700 font-semibold text-sm sm:text-base leading-relaxed">
+                    "Halo Ilmuwan Cilik! Selamat datang di Laboratorium Maya IPAS. Isi namamu terlebih dahulu, amati cerita perosotan di taman, lalu buat hipotesis awalmu ya!"
+                </p>
+            </div>
+
+            <!-- Tombol Bacakan Suara (Text-to-Speech Bahasa Indonesia) -->
+            <button onclick="speakCurrentMascot()" class="btn-bounce flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-extrabold text-sm shadow-md">
+                <i class="fa-solid fa-volume-high text-lg"></i>
+                <span>Bacakan Suara</span>
+            </button>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- TAHAP 1: ZONA PEMANTIK & HIPOTESIS (MINDFUL LEARNING)               -->
+        <!-- =================================================================== -->
+        <section id="phase-1" class="phase-section space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                
+                <!-- Kolom Kiri: Identitas Ilmuwan Cilik -->
+                <div class="lg:col-span-5 bg-white rounded-3xl p-6 shadow-lg border-2 border-sky-200 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center gap-2.5 mb-4">
+                            <div class="w-10 h-10 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center font-bold text-lg">
+                                <i class="fa-solid fa-id-card"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-xl font-bold text-slate-800">Kartu Identitas Ilmuwan Cilik</h2>
+                                <p class="text-xs text-slate-500">Data ini akan dicetak pada Sertifikat & Rapor LKPD</p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 mb-1">Nama Lengkap Siswa / Kelompok <span class="text-red-500">*</span></label>
+                                <input type="text" id="inputStudentName" oninput="saveIdentity()" placeholder="Contoh: Budi Santoso / Kelompok 1" class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-sky-500 focus:outline-none font-bold text-slate-800 bg-slate-50">
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-sm font-bold text-slate-700 mb-1">Kelas</label>
+                                    <input type="text" id="inputStudentClass" oninput="saveIdentity()" placeholder="Contoh: IV-A (Empat A)" class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-sky-500 focus:outline-none font-bold text-slate-800 bg-slate-50">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold text-slate-700 mb-1">No. Absen / Kelompok</label>
+                                    <input type="text" id="inputStudentGroup" oninput="saveIdentity()" placeholder="Contoh: Absen 07" class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-sky-500 focus:outline-none font-bold text-slate-800 bg-slate-50">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 mb-1">Nama Guru / Sekolah (Untuk Sertifikat)</label>
+                                <input type="text" id="inputTeacherName" oninput="saveIdentity()" placeholder="Contoh: SDN Nusantara 01" class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-sky-500 focus:outline-none font-semibold text-slate-700 bg-slate-50 text-sm">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 p-4 rounded-2xl bg-sky-50 border border-sky-200 flex items-center gap-3">
+                        <i class="fa-solid fa-circle-check text-2xl text-emerald-500"></i>
+                        <p class="text-xs font-semibold text-slate-600">
+                            Data tersimpan otomatis di perangkat ini. Kamu tidak perlu khawatir data hilang jika layar tidak sengaja tertutup!
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Kolom Kanan: Cerita Kontekstual & Ilustrasi SVG -->
+                <div class="lg:col-span-7 bg-white rounded-3xl p-6 shadow-lg border-2 border-amber-200">
+                    <div class="flex items-center justify-between gap-2 mb-3">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-lg">
+                                <i class="fa-solid fa-lightbulb"></i>
+                            </div>
+                            <div>
+                                <span class="text-xs font-extrabold uppercase text-amber-600">Zona Pemantik (Mindful Observation)</span>
+                                <h2 class="text-xl font-bold text-slate-800">Misteri Perosotan di Taman Bermain</h2>
+                            </div>
+                        </div>
+                        <button onclick="speakText('Hari Minggu pagi, Raka dan Siti bermain mobil-mobilan kayu di taman. Ketika mobil-mobilan diluncurkan di papan perosotan yang licin dan curam, mobil melaju sangat kencang dan berhenti jauh di rumput. Tetapi ketika diluncurkan di atas papan berkarpet kasar, mobil bergerak lambat dan cepat berhenti. Mengapa hal itu bisa terjadi?')" class="btn-bounce px-3 py-2 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-800 font-bold text-xs flex items-center gap-1.5">
+                            <i class="fa-solid fa-volume-high"></i> Dengarkan Cerita
+                        </button>
+                    </div>
+
+                    <!-- Ilustrasi SVG Kustom Cerita Kontekstual -->
+                    <div class="w-full rounded-2xl overflow-hidden border-2 border-sky-200 bg-gradient-to-b from-sky-200 via-sky-100 to-emerald-200 mb-4">
+                        <svg viewBox="0 0 700 220" class="w-full h-auto block">
+                            <!-- Matahari & Awan -->
+                            <circle cx="620" cy="45" r="26" fill="#FACC15" />
+                            <g fill="#FFFFFF" opacity="0.9">
+                                <ellipse cx="140" cy="45" rx="35" ry="16"/>
+                                <ellipse cx="165" cy="40" rx="25" ry="14"/>
+                                <ellipse cx="420" cy="55" rx="40" ry="15"/>
+                            </g>
+                            <!-- Rumput Taman -->
+                            <rect x="0" y="175" width="700" height="45" fill="#4ADE80"/>
+                            <rect x="0" y="190" width="700" height="30" fill="#22C55E"/>
+
+                            <!-- Panel Kiri: Perosotan Licin -->
+                            <g transform="translate(30, 35)">
+                                <rect x="0" y="0" width="280" height="26" rx="8" fill="#0284C7"/>
+                                <text x="140" y="18" text-anchor="middle" fill="#FFFFFF" font-size="12" font-weight="bold">Lintasan A: Papan Es/Licin (Cepat & Jauh!)</text>
+                                <!-- Tiang & Bidang Miring -->
+                                <line x1="25" y1="40" x2="25" y2="140" stroke="#475569" stroke-width="6"/>
+                                <polygon points="25,45 155,140 25,140" fill="#BAE6FD" opacity="0.7"/>
+                                <line x1="25" y1="45" x2="155" y2="140" stroke="#0284C7" stroke-width="7" stroke-linecap="round"/>
+                                <line x1="155" y1="140" x2="290" y2="140" stroke="#38BDF8" stroke-width="7" stroke-linecap="round"/>
+                                <!-- Mobil/Balok Meluncur Cepat -->
+                                <g transform="translate(215, 116)">
+                                    <rect x="0" y="0" width="38" height="22" rx="5" fill="#EF4444" stroke="#991B1B" stroke-width="2"/>
+                                    <line x1="-25" y1="6" x2="-6" y2="6" stroke="#0284C7" stroke-width="3" stroke-linecap="round"/>
+                                    <line x1="-35" y1="14" x2="-10" y2="14" stroke="#0284C7" stroke-width="3" stroke-linecap="round"/>
+                                    <text x="19" y="15" text-anchor="middle" fill="#FFF" font-size="10" font-weight="bold">Wuz!</text>
+                                </g>
+                            </g>
+
+                            <!-- Panel Kanan: Perosotan Karpet Kasar -->
+                            <g transform="translate(370, 35)">
+                                <rect x="0" y="0" width="295" height="26" rx="8" fill="#B45309"/>
+                                <text x="147" y="18" text-anchor="middle" fill="#FFFFFF" font-size="12" font-weight="bold">Lintasan B: Karpet Kasar (Lambat & Pendek)</text>
+                                <line x1="25" y1="40" x2="25" y2="140" stroke="#475569" stroke-width="6"/>
+                                <polygon points="25,45 155,140 25,140" fill="#FDE68A" opacity="0.6"/>
+                                <line x1="25" y1="45" x2="155" y2="140" stroke="#92400E" stroke-width="8" stroke-dasharray="6,4" stroke-linecap="round"/>
+                                <line x1="155" y1="140" x2="290" y2="140" stroke="#92400E" stroke-width="8" stroke-dasharray="6,4" stroke-linecap="round"/>
+                                <!-- Balok Tertahan -->
+                                <g transform="translate(158, 116)">
+                                    <rect x="0" y="0" width="38" height="22" rx="5" fill="#F59E0B" stroke="#78350F" stroke-width="2"/>
+                                    <text x="19" y="15" text-anchor="middle" fill="#FFF" font-size="10" font-weight="bold">Pelan</text>
+                                </g>
+                            </g>
+                        </svg>
+                    </div>
+
+                    <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-2xl text-sm text-slate-700 space-y-2">
+                        <p class="font-bold text-amber-900">
+                            <i class="fa-solid fa-magnifying-glass mr-1"></i> Pertanyaan Pemantik untuk Ilmuwan Cilik:
+                        </p>
+                        <p>
+                            Hari Minggu pagi, Raka dan Siti meluncurkan kotak mainan di atas dua lintasan yang berbeda. Pada <strong>lintasan yang licin dan curam</strong>, kotak meluncur sangat cepat dan berhenti jauh sekali. Namun pada <strong>lintasan karpet yang kasar</strong>, kotak meluncur pelan dan langsung berhenti di dekat ujung perosotan!
+                        </p>
+                        <p class="font-bold text-sky-900">
+                            Apa yang sebenarnya menahan gerak kotak mainan tersebut? Bagaimana pula jika sudut kemiringan perosotan kita naikkan?
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KARTU HIPOTESIS INTERAKTIF -->
+            <div class="bg-white rounded-3xl p-6 shadow-lg border-2 border-emerald-300">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-11 h-11 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xl">
+                            <i class="fa-solid fa-brain"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-800">Susun Hipotesis Cilikmu! (Dugaan Awal)</h2>
+                            <p class="text-xs sm:text-sm text-slate-600">Pilih <strong>1 prediksi awal</strong> di bawah ini sebelum kamu masuk ke Meja Eksperimen. Nanti kita buktikan bersama!</p>
+                        </div>
+                    </div>
+                    <span id="hypothesisStatusBadge" class="px-3 py-1 rounded-full text-xs font-extrabold bg-amber-100 text-amber-800">
+                        Belum Memilih Hipotesis
+                    </span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
+                    <!-- Pilihan Hipotesis 1 -->
+                    <button onclick="selectHypothesis(1, 'Semakin HALUS permukaan lintasan dan semakin BESAR sudut kemiringan, maka gaya gesek semakin kecil sehingga benda meluncur LEBIH CEPAT dan berhenti LEBIH JAUH.')" id="hypo-card-1" class="hypo-card btn-bounce text-left p-4 rounded-2xl border-2 border-slate-200 hover:border-sky-400 bg-slate-50 transition-all flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="px-2.5 py-0.5 rounded-lg bg-sky-100 text-sky-800 font-extrabold text-xs">Hipotesis A</span>
+                                <i class="fa-solid fa-circle-check text-xl text-slate-300 hypo-check"></i>
+                            </div>
+                            <p class="text-sm font-bold text-slate-800 leading-relaxed">
+                                "Menurutku, semakin <span class="text-sky-700 underline">HALUS</span> permukaan lintasan dan semakin <span class="text-sky-700 underline">CURAM</span> sudut kemiringannya, benda akan meluncur <strong>lebih cepat dan berhenti lebih jauh</strong>."
+                            </p>
+                        </div>
+                        <span class="mt-3 text-[11px] font-bold text-slate-500">Klik untuk memilih dugaan ini</span>
+                    </button>
+
+                    <!-- Pilihan Hipotesis 2 -->
+                    <button onclick="selectHypothesis(2, 'Semakin KASAR permukaan lintasan, maka benda akan meluncur LEBIH CEPAT dan menempuh jarak paling jauh karena permukaannya mendorong benda.')" id="hypo-card-2" class="hypo-card btn-bounce text-left p-4 rounded-2xl border-2 border-slate-200 hover:border-sky-400 bg-slate-50 transition-all flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="px-2.5 py-0.5 rounded-lg bg-purple-100 text-purple-800 font-extrabold text-xs">Hipotesis B</span>
+                                <i class="fa-solid fa-circle-check text-xl text-slate-300 hypo-check"></i>
+                            </div>
+                            <p class="text-sm font-bold text-slate-800 leading-relaxed">
+                                "Menurutku, semakin <span class="text-purple-700 underline">KASAR</span> permukaan lintasan (seperti karpet), benda justru akan meluncur <strong>lebih cepat dan berhenti paling jauh</strong>."
+                            </p>
+                        </div>
+                        <span class="mt-3 text-[11px] font-bold text-slate-500">Klik untuk memilih dugaan ini</span>
+                    </button>
+
+                    <!-- Pilihan Hipotesis 3 -->
+                    <button onclick="selectHypothesis(3, 'Jenis permukaan lintasan dan sudut kemiringan TIDAK MEMENGARUHI kecepatan maupun jarak berhenti benda sama sekali.')" id="hypo-card-3" class="hypo-card btn-bounce text-left p-4 rounded-2xl border-2 border-slate-200 hover:border-sky-400 bg-slate-50 transition-all flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="px-2.5 py-0.5 rounded-lg bg-amber-100 text-amber-800 font-extrabold text-xs">Hipotesis C</span>
+                                <i class="fa-solid fa-circle-check text-xl text-slate-300 hypo-check"></i>
+                            </div>
+                            <p class="text-sm font-bold text-slate-800 leading-relaxed">
+                                "Menurutku, jenis permukaan maupun sudut kemiringan <span class="text-amber-700 underline">TIDAK BERPENGARUH</span>. Semua benda akan berhenti pada jarak yang sama."
+                            </p>
+                        </div>
+                        <span class="mt-3 text-[11px] font-bold text-slate-500">Klik untuk memilih dugaan ini</span>
+                    </button>
+                </div>
+
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-3 border-t border-slate-200">
+                    <p class="text-xs sm:text-sm font-semibold text-slate-600">
+                        <i class="fa-solid fa-wand-magic-sparkles text-amber-500 mr-1"></i>
+                        Catatan Ilmuwan: Tidak apa-apa jika dugaan awalmu belum tepat. Ilmuwan sejati menguji dugaannya lewat eksperimen!
+                    </p>
+                    <button onclick="switchPhase(2)" class="btn-bounce w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-extrabold text-base shadow-lg flex items-center justify-center gap-2">
+                        <span>Buka Meja Eksperimen</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- TAHAP 2: MEJA EKSPERIMEN & MISI TANTANGAN (JOYFUL SANDBOX)          -->
+        <!-- =================================================================== -->
+        <section id="phase-2" class="phase-section hidden space-y-5">
+
+            <!-- PANEL 3 MISI TANTANGAN LAB OTOMATIS (AUTO-GRADED MISSIONS) -->
+            <div class="bg-white rounded-3xl p-4 sm:p-5 shadow-lg border-2 border-amber-300">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="w-8 h-8 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center font-bold">
+                            <i class="fa-solid fa-flag-checkered"></i>
+                        </span>
+                        <div>
+                            <h2 class="text-base sm:text-lg font-bold text-slate-800">Misi Tantangan Ilmuwan Cilik (Terdeteksi Otomatis!)</h2>
+                        </div>
+                    </div>
+                    <span class="text-xs font-bold text-slate-500">Selesaikan ke-3 misi di bawah ini dengan mengatur alat di meja lab!</span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <!-- Misi 1 -->
+                    <div id="mission-card-1" class="p-3.5 rounded-2xl border-2 border-slate-200 bg-slate-50 flex items-start gap-3 transition-all">
+                        <div id="mission-icon-1" class="w-8 h-8 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center font-bold flex-shrink-0 mt-0.5">
+                            1
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-extrabold uppercase tracking-wider text-sky-700">Misi 1: Peluncur Super Jauh</span>
+                                <span id="mission-badge-1" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-600">Belum</span>
+                            </div>
+                            <p class="text-xs sm:text-sm font-bold text-slate-700 mt-1">
+                                Buat balok meluncur dan berhenti pada jarak <strong>lebih dari 8,0 meter</strong>!
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Misi 2 -->
+                    <div id="mission-card-2" class="p-3.5 rounded-2xl border-2 border-slate-200 bg-slate-50 flex items-start gap-3 transition-all">
+                        <div id="mission-icon-2" class="w-8 h-8 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center font-bold flex-shrink-0 mt-0.5">
+                            2
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-extrabold uppercase tracking-wider text-amber-700">Misi 2: Pengereman Karpet</span>
+                                <span id="mission-badge-2" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-600">Belum</span>
+                            </div>
+                            <p class="text-xs sm:text-sm font-bold text-slate-700 mt-1">
+                                Gunakan permukaan <strong>Karpet Kasar</strong> dan buat balok berhenti di bawah <strong>2,5 meter</strong>!
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Misi 3 -->
+                    <div id="mission-card-3" class="p-3.5 rounded-2xl border-2 border-slate-200 bg-slate-50 flex items-start gap-3 transition-all">
+                        <div id="mission-icon-3" class="w-8 h-8 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center font-bold flex-shrink-0 mt-0.5">
+                            3
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-700">Misi 3: Kolektor Data LKPD</span>
+                                <span id="mission-badge-3" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-600">Belum</span>
+                            </div>
+                            <p class="text-xs sm:text-sm font-bold text-slate-700 mt-1">
+                                Rekam minimal <strong>3 data percobaan berbeda</strong> ke dalam Tabel Jurnal LKPD!
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LAYAR UTAMA SIMULASI & ALAT UKUR REAL-TIME -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                
+                <!-- Kolom Kiri (8 Kolom): Visualisasi Canvas 60FPS & Indikator Alat Ukur -->
+                <div class="lg:col-span-8 bg-white rounded-3xl p-4 sm:p-5 shadow-lg border-2 border-sky-300 flex flex-col justify-between space-y-4">
+                    
+                    <!-- Bar Indikator Alat Ukur Digital Real-Time (Dengan Tooltip Edukatif) -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                        <!-- Stopwatch -->
+                        <div title="Stopwatch: Mengukur berapa detik waktu yang ditempuh benda dari puncak hingga berhenti total" class="p-3 rounded-2xl bg-slate-900 text-white border-2 border-slate-700 flex items-center gap-2.5 cursor-help">
+                            <div class="w-10 h-10 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center text-lg">
+                                <i class="fa-solid fa-stopwatch"></i>
+                            </div>
+                            <div>
+                                <span class="block text-[10px] uppercase tracking-wider text-slate-400 font-bold">Waktu Tempuh</span>
+                                <span class="font-mono text-lg sm:text-xl font-extrabold text-sky-300"><span id="meterTime">0.00</span> s</span>
+                            </div>
+                        </div>
+
+                        <!-- Speedometer -->
+                        <div title="Speedometer: Mengukur kecepatan luncur benda (meter per detik)" class="p-3 rounded-2xl bg-slate-900 text-white border-2 border-slate-700 flex items-center gap-2.5 cursor-help">
+                            <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-lg">
+                                <i class="fa-solid fa-gauge-high"></i>
+                            </div>
+                            <div>
+                                <span class="block text-[10px] uppercase tracking-wider text-slate-400 font-bold">Kecepatan Puncak</span>
+                                <span class="font-mono text-lg sm:text-xl font-extrabold text-amber-300"><span id="meterMaxSpeed">0.00</span> m/s</span>
+                            </div>
+                        </div>
+
+                        <!-- Meteran Jarak Berhenti -->
+                        <div title="Meteran Jarak: Mengukur seberapa jauh benda meluncur di lantai datar sebelum berhenti karena gaya gesek" class="p-3 rounded-2xl bg-slate-900 text-white border-2 border-slate-700 flex items-center gap-2.5 cursor-help">
+                            <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg">
+                                <i class="fa-solid fa-ruler-horizontal"></i>
+                            </div>
+                            <div>
+                                <span class="block text-[10px] uppercase tracking-wider text-slate-400 font-bold">Jarak Berhenti</span>
+                                <span class="font-mono text-lg sm:text-xl font-extrabold text-emerald-300"><span id="meterDistance">0.00</span> m</span>
+                            </div>
+                        </div>
+
+                        <!-- Dinamometer Gaya Gesek -->
+                        <div title="Dinamometer: Mengukur besarnya Gaya Gesek (Newton) yang menahan laju benda" class="p-3 rounded-2xl bg-slate-900 text-white border-2 border-slate-700 flex items-center gap-2.5 cursor-help">
+                            <div class="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center text-lg">
+                                <i class="fa-solid fa-hand-Sparkles fa-fire-flame-simple"></i>
+                            </div>
+                            <div>
+                                <span class="block text-[10px] uppercase tracking-wider text-slate-400 font-bold">Gaya Gesek</span>
+                                <span class="font-mono text-lg sm:text-xl font-extrabold text-rose-300"><span id="meterFriction">0.0</span> N</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- KANVAS SIMULASI INTERAKTIF -->
+                    <div class="relative w-full rounded-2xl overflow-hidden border-2 border-slate-300 bg-sky-100 shadow-inner" style="height: 360px;">
+                        <canvas id="simCanvas" class="w-full h-full block"></canvas>
+
+                        <!-- Badge Info Status di Atas Kanvas -->
+                        <div class="absolute top-3 left-3 flex flex-wrap items-center gap-2 pointer-events-none">
+                            <span id="canvasSurfaceBadge" class="px-3 py-1 rounded-full text-xs font-extrabold bg-white/90 text-sky-900 shadow border border-sky-200">
+                                Permukaan: Kayu Halus (μ = 0.20)
+                            </span>
+                            <span id="canvasSpeedModeBadge" class="hidden px-3 py-1 rounded-full text-xs font-extrabold bg-purple-600 text-white shadow">
+                                <i class="fa-solid fa-film mr-1"></i> Gerak Lambat 0.5x Aktif
+                            </span>
+                        </div>
+
+                        <!-- Toggle Panah Vektor Gaya di Pojok Kanan Atas Kanvas -->
+                        <div class="absolute top-3 right-3">
+                            <button onclick="toggleVectors()" id="btnToggleVectors" class="btn-bounce px-3 py-1.5 rounded-xl text-xs font-extrabold bg-white/90 hover:bg-white text-slate-800 shadow border border-slate-300 flex items-center gap-1.5">
+                                <i class="fa-solid fa-arrows-left-right text-sky-600"></i>
+                                <span id="labelToggleVectors">Panah Gaya: ON</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- TOMBOL KONTROL PEMUTARAN SIMULASI -->
+                    <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <!-- Mulai / Luncurkan -->
+                            <button id="btnStartSim" onclick="startSimulation()" class="btn-bounce px-5 py-3 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white font-extrabold text-sm sm:text-base shadow-md flex items-center gap-2">
+                                <i class="fa-solid fa-play"></i>
+                                <span>Luncurkan Benda!</span>
+                            </button>
+
+                            <!-- Jeda / Pause -->
+                            <button id="btnPauseSim" onclick="pauseSimulation()" class="btn-bounce px-4 py-3 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-sm shadow flex items-center gap-1.5">
+                                <i id="iconPause" class="fa-solid fa-pause"></i>
+                                <span id="textPause">Jeda</span>
+                            </button>
+
+                            <!-- Slow Motion 0.5x -->
+                            <button id="btnSlowMo" onclick="toggleSlowMotion()" class="btn-bounce px-4 py-3 rounded-2xl bg-purple-100 hover:bg-purple-200 text-purple-900 border-2 border-purple-300 font-extrabold text-sm transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-gauge-simple-low"></i>
+                                <span id="textSlowMo">Slow-Mo 0.5x</span>
+                            </button>
+
+                            <!-- Reset Alat -->
+                            <button onclick="resetSimulation()" class="btn-bounce px-4 py-3 rounded-2xl bg-slate-200 hover:bg-slate-300 text-slate-700 font-extrabold text-sm transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-rotate-left"></i>
+                                <span>Reset</span>
+                            </button>
+                        </div>
+
+                        <!-- Tombol Rekam ke Jurnal LKPD -->
+                        <button id="btnRecordLKPD" onclick="recordToLKPD()" class="btn-bounce px-5 py-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-extrabold text-sm sm:text-base shadow-md flex items-center gap-2 pulse-glow">
+                            <i class="fa-solid fa-clipboard-check"></i>
+                            <span>Rekam ke Jurnal LKPD (<span id="lkpdCountBadge">0</span>)</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Kolom Kanan (4 Kolom): Panel Kontrol Variabel Bebas -->
+                <div class="lg:col-span-4 bg-white rounded-3xl p-5 shadow-lg border-2 border-sky-300 flex flex-col justify-between space-y-5">
+                    <div>
+                        <div class="flex items-center gap-2.5 pb-3 border-b border-slate-200">
+                            <div class="w-9 h-9 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center font-bold">
+                                <i class="fa-solid fa-sliders"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-bold text-slate-800">Panel Variabel Bebas</h3>
+                                <p class="text-xs text-slate-500">Ubah pengaturan alat di bawah ini lalu klik Luncurkan!</p>
+                            </div>
+                        </div>
+
+                        <!-- VARIABEL 1: JENIS PERMUKAAN LINTASAN -->
+                        <div class="mt-4">
+                            <label class="block text-sm font-extrabold text-slate-700 mb-2">
+                                1. Pilih Jenis Permukaan Lintasan:
+                            </label>
+                            <div class="grid grid-cols-2 gap-2.5">
+                                <button onclick="setSurface('ice')" id="surf-ice" class="surf-btn btn-bounce p-3 rounded-2xl border-2 text-left transition-all flex flex-col justify-between">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-lg">🧊</span>
+                                        <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-sky-100 text-sky-800">Sangat Licin</span>
+                                    </div>
+                                    <div class="mt-1">
+                                        <p class="font-extrabold text-sm text-slate-800">Lantai Es</p>
+                                        <p class="text-[11px] text-slate-500 font-semibold">Koefisien Gesek: 0.08</p>
+                                    </div>
+                                </button>
+
+                                <button onclick="setSurface('wood')" id="surf-wood" class="surf-btn btn-bounce p-3 rounded-2xl border-2 text-left transition-all flex flex-col justify-between">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-lg">🪵</span>
+                                        <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">Agak Halus</span>
+                                    </div>
+                                    <div class="mt-1">
+                                        <p class="font-extrabold text-sm text-slate-800">Kayu Halus</p>
+                                        <p class="text-[11px] text-slate-500 font-semibold">Koefisien Gesek: 0.20</p>
+                                    </div>
+                                </button>
+
+                                <button onclick="setSurface('asphalt')" id="surf-asphalt" class="surf-btn btn-bounce p-3 rounded-2xl border-2 text-left transition-all flex flex-col justify-between">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-lg">🛣️</span>
+                                        <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-slate-200 text-slate-800">Agak Kasar</span>
+                                    </div>
+                                    <div class="mt-1">
+                                        <p class="font-extrabold text-sm text-slate-800">Jalan Aspal</p>
+                                        <p class="text-[11px] text-slate-500 font-semibold">Koefisien Gesek: 0.38</p>
+                                    </div>
+                                </button>
+
+                                <button onclick="setSurface('carpet')" id="surf-carpet" class="surf-btn btn-bounce p-3 rounded-2xl border-2 text-left transition-all flex flex-col justify-between">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-lg">🧶</span>
+                                        <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800">Sangat Kasar</span>
+                                    </div>
+                                    <div class="mt-1">
+                                        <p class="font-extrabold text-sm text-slate-800">Karpet Kasar</p>
+                                        <p class="text-[11px] text-slate-500 font-semibold">Koefisien Gesek: 0.58</p>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- VARIABEL 2: SUDUT KEMIRINGAN BIDANG (15° - 60°) -->
+                        <div class="mt-5 bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+                            <div class="flex items-center justify-between mb-2">
+                                <label for="sliderAngle" class="text-sm font-extrabold text-slate-700">
+                                    2. Sudut Kemiringan Bidang:
+                                </label>
+                                <span class="px-3 py-1 rounded-xl bg-sky-600 text-white font-extrabold text-sm shadow-sm">
+                                    <span id="valAngle">30</span>°
+                                </span>
+                            </div>
+                            <input type="range" id="sliderAngle" min="15" max="60" step="5" value="30" oninput="updateAngle(this.value)" class="w-full">
+                            <div class="flex justify-between text-[11px] font-bold text-slate-400 mt-1">
+                                <span>15° (Landai)</span>
+                                <span>35° (Sedang)</span>
+                                <span>60° (Curam)</span>
+                            </div>
+                        </div>
+
+                        <!-- VARIABEL 3: MASSA BENDA (1 kg - 10 kg) -->
+                        <div class="mt-4 bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+                            <div class="flex items-center justify-between mb-2">
+                                <label for="sliderMass" class="text-sm font-extrabold text-slate-700">
+                                    3. Massa Benda (Beban Kotak):
+                                </label>
+                                <span class="px-3 py-1 rounded-xl bg-amber-500 text-white font-extrabold text-sm shadow-sm">
+                                    <span id="valMass">4</span> kg
+                                </span>
+                            </div>
+                            <input type="range" id="sliderMass" min="1" max="10" step="1" value="4" oninput="updateMass(this.value)" class="w-full">
+                            <div class="flex justify-between text-[11px] font-bold text-slate-400 mt-1">
+                                <span>1 kg (Ringan)</span>
+                                <span>5 kg (Sedang)</span>
+                                <span>10 kg (Berat)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Kotak Info Hasil Eksperimen Terakhir -->
+                    <div id="liveFeedbackBox" class="p-3.5 rounded-2xl bg-sky-50 border border-sky-200 text-xs font-semibold text-slate-700 leading-relaxed">
+                        <i class="fa-solid fa-circle-info text-sky-600 mr-1"></i>
+                        <strong>Petunjuk Eksperimen:</strong> Tekan tombol <strong>"Luncurkan Benda!"</strong>, amati pergerakan kotak sampai berhenti, lalu klik <strong>"Rekam ke Jurnal LKPD"</strong>.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- TAHAP 3: JURNAL PENGAMATAN & GRAFIK VISUAL (DIGITAL LKPD)           -->
+        <!-- =================================================================== -->
+        <section id="phase-3" class="phase-section hidden space-y-6">
+            
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                
+                <!-- Kolom Kiri (7 Kolom): Tabel Jurnal Pengamatan Otomatis -->
+                <div class="lg:col-span-7 bg-white rounded-3xl p-6 shadow-lg border-2 border-sky-300 flex flex-col justify-between">
+                    <div>
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-10 h-10 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center font-bold text-lg">
+                                    <i class="fa-solid fa-table-list"></i>
+                                </div>
+                                <div>
+                                    <h2 class="text-xl font-bold text-slate-800">Tabel Jurnal Pengamatan (LKPD Digital)</h2>
+                                    <p class="text-xs text-slate-500">Data percobaan yang kamu rekam di Meja Eksperimen otomatis masuk ke sini</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button onclick="switchPhase(2)" class="btn-bounce px-3 py-1.5 rounded-xl bg-sky-100 hover:bg-sky-200 text-sky-800 font-bold text-xs">
+                                    + Tambah Percobaan
+                                </button>
+                                <button onclick="clearLKPD()" class="btn-bounce px-3 py-1.5 rounded-xl bg-rose-100 hover:bg-rose-200 text-rose-700 font-bold text-xs">
+                                    <i class="fa-solid fa-trash-can mr-1"></i> Kosongkan
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto rounded-2xl border border-slate-200">
+                            <table class="w-full text-left border-collapse text-xs sm:text-sm">
+                                <thead>
+                                    <tr class="bg-sky-600 text-white font-bold">
+                                        <th class="p-3 text-center">#</th>
+                                        <th class="p-3">Permukaan</th>
+                                        <th class="p-3 text-center">Sudut</th>
+                                        <th class="p-3 text-center">Massa</th>
+                                        <th class="p-3 text-center">Kecepatan</th>
+                                        <th class="p-3 text-center">Gaya Gesek</th>
+                                        <th class="p-3 text-center">Jarak Berhenti</th>
+                                        <th class="p-3 text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="lkpdTableBody" class="divide-y divide-slate-200 font-semibold text-slate-700">
+                                    <!-- Diisi otomatis oleh JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 p-3.5 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-between gap-3">
+                        <p class="text-xs font-semibold text-amber-900">
+                            <i class="fa-solid fa-lightbulb text-amber-500 mr-1"></i>
+                            Ingin melihat contoh perbandingan data instan? Kamu juga bisa menambahkan sampel data percobaan untuk dianalisis!
+                        </p>
+                        <button onclick="addSampleData()" class="btn-bounce flex-shrink-0 px-3 py-1.5 rounded-xl bg-amber-200 hover:bg-amber-300 text-amber-900 font-extrabold text-xs">
+                            Isi Contoh Data
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Kolom Kanan (5 Kolom): Grafik Batang Visual Otomatis (Literasi Numerasi) -->
+                <div class="lg:col-span-5 bg-white rounded-3xl p-6 shadow-lg border-2 border-purple-300 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between gap-2 mb-3">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-lg">
+                                    <i class="fa-solid fa-chart-column"></i>
+                                </div>
+                                <div>
+                                    <h2 class="text-lg font-bold text-slate-800">Grafik Perbandingan Percobaan</h2>
+                                    <p class="text-xs text-slate-500">Visualisasi numerasi otomatis dari tabel pengamatanmu</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pilihan Metrik Grafik -->
+                        <div class="flex items-center gap-2 mb-4">
+                            <button onclick="setChartMetric('distance')" id="chart-btn-distance" class="chart-metric-btn flex-1 py-1.5 px-2 rounded-xl font-extrabold text-xs border-2 transition">
+                                Jarak Berhenti (m)
+                            </button>
+                            <button onclick="setChartMetric('speed')" id="chart-btn-speed" class="chart-metric-btn flex-1 py-1.5 px-2 rounded-xl font-extrabold text-xs border-2 transition">
+                                Kecepatan (m/s)
+                            </button>
+                            <button onclick="setChartMetric('friction')" id="chart-btn-friction" class="chart-metric-btn flex-1 py-1.5 px-2 rounded-xl font-extrabold text-xs border-2 transition">
+                                Gaya Gesek (N)
+                            </button>
+                        </div>
+
+                        <!-- Area Bar Chart Dinamis -->
+                        <div id="chartContainer" class="space-y-3 min-h-[220px] flex flex-col justify-center bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                            <!-- Di-render secara dinamis oleh JS -->
+                        </div>
+                    </div>
+
+                    <p class="text-xs font-semibold text-slate-500 mt-3">
+                        <i class="fa-solid fa-chart-simple text-purple-600 mr-1"></i>
+                        Perhatikan batang yang paling panjang dan paling pendek untuk menjawab kesimpulan di bawah!
+                    </p>
+                </div>
+            </div>
+
+            <!-- VERIFIKASI HIPOTESIS & KESIMPULAN TERBIMBING (FILL-IN-THE-BLANKS) -->
+            <div class="bg-white rounded-3xl p-6 shadow-lg border-2 border-emerald-300 space-y-5">
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xl">
+                        <i class="fa-solid fa-magnifying-glass-chart"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800">Verifikasi Hipotesis & Kesimpulan Terbimbing</h2>
+                        <p class="text-xs sm:text-sm text-slate-600">Bandingkan dugaan awalmu di Tahap 1 dengan hasil eksperimenmu di tabel!</p>
+                    </div>
+                </div>
+
+                <!-- Kotak Review Hipotesis Awal -->
+                <div class="p-4 rounded-2xl bg-sky-50 border-2 border-sky-200 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    <div>
+                        <span class="text-xs font-extrabold uppercase text-sky-700">Hipotesis Awalmu pada Tahap 1:</span>
+                        <p id="reviewHypothesisText" class="text-sm sm:text-base font-bold text-slate-800 mt-0.5">
+                            "Belum memilih hipotesis di Tahap 1."
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        <button onclick="setHypothesisVerdict('Terbukti Benar')" id="verdict-true" class="btn-bounce px-4 py-2 rounded-xl border-2 border-slate-300 bg-white font-extrabold text-xs sm:text-sm transition">
+                            ✅ Terbukti Benar
+                        </button>
+                        <button onclick="setHypothesisVerdict('Perlu Diperbaiki')" id="verdict-fix" class="btn-bounce px-4 py-2 rounded-xl border-2 border-slate-300 bg-white font-extrabold text-xs sm:text-sm transition">
+                            🔧 Perlu Diperbaiki
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Paragraf Rumpang Interaktif -->
+                <div class="p-5 rounded-2xl bg-emerald-50/70 border-2 border-emerald-200 space-y-4">
+                    <h3 class="font-bold text-emerald-950 text-base flex items-center gap-2">
+                        <i class="fa-solid fa-pen-to-square text-emerald-600"></i>
+                        Lengkapi Kalimat Kesimpulan Ilmiah Berikut:
+                    </h3>
+
+                    <div class="text-sm sm:text-base font-semibold text-slate-800 leading-loose">
+                        Berdasarkan penyelidikan di laboratorium maya, permukaan lintasan yang paling licin seperti 
+                        <select id="concl-1" onchange="saveConclusions()" class="mx-1 px-3 py-1 rounded-xl border-2 border-sky-400 bg-white font-extrabold text-sky-900 focus:outline-none">
+                            <option value="">-- Pilih Permukaan --</option>
+                            <option value="Lantai Es">Lantai Es</option>
+                            <option value="Jalan Aspal">Jalan Aspal</option>
+                            <option value="Karpet Kasar">Karpet Kasar</option>
+                        </select>
+                        menghasilkan gaya gesek yang paling 
+                        <select id="concl-2" onchange="saveConclusions()" class="mx-1 px-3 py-1 rounded-xl border-2 border-sky-400 bg-white font-extrabold text-sky-900 focus:outline-none">
+                            <option value="">-- Pilih Ukuran --</option>
+                            <option value="kecil">kecil</option>
+                            <option value="besar">besar</option>
+                        </select>,
+                        sehingga benda dapat meluncur paling cepat dan berhenti paling jauh. Sebaliknya, permukaan yang kasar seperti <strong>Karpet Kasar</strong> memiliki gaya gesek yang besar sehingga menghambat gerak benda. Selain itu, semakin 
+                        <select id="concl-3" onchange="saveConclusions()" class="mx-1 px-3 py-1 rounded-xl border-2 border-sky-400 bg-white font-extrabold text-sky-900 focus:outline-none">
+                            <option value="">-- Pilih Sudut --</option>
+                            <option value="besar (curam)">besar (curam)</option>
+                            <option value="kecil (landai)">kecil (landai)</option>
+                        </select>
+                        sudut kemiringan bidang miring, maka kecepatan luncur benda menjadi semakin 
+                        <select id="concl-4" onchange="saveConclusions()" class="mx-1 px-3 py-1 rounded-xl border-2 border-sky-400 bg-white font-extrabold text-sky-900 focus:outline-none">
+                            <option value="">-- Pilih Kecepatan --</option>
+                            <option value="cepat">cepat</option>
+                            <option value="lambat">lambat</option>
+                        </select>.
+                    </div>
+
+                    <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
+                        <div id="conclusionFeedback" class="text-xs sm:text-sm font-bold text-slate-600">
+                            Pilih semua kata yang tepat pada kotak pilihan di atas lalu klik "Cek Kesimpulan"!
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="checkConclusion()" class="btn-bounce px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm shadow">
+                                <i class="fa-solid fa-check-double mr-1"></i> Cek Kesimpulan
+                            </button>
+                            <button onclick="switchPhase(4)" class="btn-bounce px-5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-sm shadow">
+                                Lanjut ke Pojok Sains <i class="fa-solid fa-arrow-right ml-1"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- TAHAP 4: POJOK SAINS & APLIKASI NYATA (MEANINGFUL CONCEPT)          -->
+        <!-- =================================================================== -->
+        <section id="phase-4" class="phase-section hidden space-y-6">
+            <div class="bg-white rounded-3xl p-6 shadow-lg border-2 border-sky-300">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-6">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-2xl bg-sky-100 text-sky-700 flex items-center justify-center font-bold text-2xl">
+                            <i class="fa-solid fa-book-open-reader"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-xl sm:text-2xl font-bold text-slate-800">Pojok Sains: Mengapa Hal Itu Bisa Terjadi?</h2>
+                            <p class="text-xs sm:text-sm text-slate-500">Pelajari 3 konsep kunci di balik eksperimen yang baru saja kamu lakukan!</p>
+                        </div>
+                    </div>
+                    <button onclick="speakText('Mari kita pelajari tiga rahasia sains dari percobaanmu. Pertama, gaya gesek muncul karena dua permukaan benda saling bersentuhan dan arahnya selalu berlawanan dengan arah gerak benda. Kedua, bidang miring yang semakin curam membuat tarikan gravitasi ke bawah semakin kuat. Ketiga, massa benda memperbesar gaya tekan ke lantai sehingga gaya gesek dalam satuan Newton ikut membesar.')" class="btn-bounce px-4 py-2 rounded-xl bg-sky-100 hover:bg-sky-200 text-sky-800 font-extrabold text-xs flex items-center gap-1.5">
+                        <i class="fa-solid fa-volume-high"></i> Dengarkan Penjelasan
+                    </button>
+                </div>
+
+                <!-- 3 KARTU KONSEP INTERAKTIF -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <!-- Kartu Konsep 1 -->
+                    <div class="concept-card rounded-3xl border-2 border-sky-200 bg-gradient-to-b from-sky-50 to-white p-5 shadow-md flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="px-3 py-1 rounded-full bg-sky-600 text-white text-xs font-extrabold">Konsep 1</span>
+                                <button onclick="speakText('Apa itu Gaya Gesek? Gaya gesek adalah gaya yang muncul ketika dua permukaan benda saling bersentuhan. Arah gaya gesek selalu berlawanan dengan arah gerak benda. Permukaan halus seperti es menghasilkan gaya gesek kecil, sedangkan permukaan kasar seperti karpet menghasilkan gaya gesek besar.')" class="w-8 h-8 rounded-full bg-sky-100 text-sky-700 hover:bg-sky-200 flex items-center justify-center">
+                                    <i class="fa-solid fa-volume-high text-xs"></i>
+                                </button>
+                            </div>
+                            <!-- Visual SVG Mikroskop Permukaan -->
+                            <div class="bg-white rounded-2xl p-3 border border-sky-100 mb-3">
+                                <svg viewBox="0 0 240 90" class="w-full h-24">
+                                    <rect x="40" y="12" width="160" height="32" rx="6" fill="#F59E0B"/>
+                                    <text x="120" y="32" text-anchor="middle" fill="#FFF" font-size="11" font-weight="bold">Arah Gerak ➔</text>
+                                    <!-- Gerigi Kasar -->
+                                    <polyline points="20,62 40,46 60,62 80,46 100,62 120,46 140,62 160,46 180,62 200,46 220,62" fill="none" stroke="#EF4444" stroke-width="4"/>
+                                    <text x="120" y="82" text-anchor="middle" fill="#DC2626" font-size="11" font-weight="bold">⬅ Gaya Gesek Menahan</text>
+                                </svg>
+                            </div>
+                            <h3 class="text-lg font-bold text-slate-800 mb-2">1. Rahasia Gaya Gesek</h3>
+                            <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                                <strong>Gaya gesek</strong> muncul ketika dua permukaan benda saling bersentuhan. Arahnya selalu <strong>berlawanan</strong> dengan arah gerak benda! Permukaan <em>licin</em> (es) memiliki tonjolan mikroskopis yang sangat halus sehingga gaya geseknya kecil.
+                            </p>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-sky-100 text-xs font-extrabold text-sky-700">
+                            💡 Semakin kasar permukaan = Gaya gesek semakin besar!
+                        </div>
+                    </div>
+
+                    <!-- Kartu Konsep 2 -->
+                    <div class="concept-card rounded-3xl border-2 border-amber-200 bg-gradient-to-b from-amber-50 to-white p-5 shadow-md flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="px-3 py-1 rounded-full bg-amber-500 text-white text-xs font-extrabold">Konsep 2</span>
+                                <button onclick="speakText('Pengaruh Sudut Bidang Miring. Ketika sudut kemiringan diperbesar menjadi lebih curam, tarikan gaya gravitasi bumi di sepanjang papan miring menjadi lebih kuat. Akibatnya benda meluncur turun dengan percepatan dan kecepatan puncak yang jauh lebih tinggi.')" class="w-8 h-8 rounded-full bg-amber-100 text-amber-700 hover:bg-amber-200 flex items-center justify-center">
+                                    <i class="fa-solid fa-volume-high text-xs"></i>
+                                </button>
+                            </div>
+                            <!-- Visual SVG Sudut Landai vs Curam -->
+                            <div class="bg-white rounded-2xl p-3 border border-amber-100 mb-3">
+                                <svg viewBox="0 0 240 90" class="w-full h-24">
+                                    <!-- Landai -->
+                                    <line x1="15" y1="55" x2="100" y2="75" stroke="#94A3B8" stroke-width="5" stroke-linecap="round"/>
+                                    <text x="55" y="45" text-anchor="middle" fill="#64748B" font-size="10" font-weight="bold">15° Landai (Pelan)</text>
+                                    <!-- Curam -->
+                                    <line x1="135" y1="15" x2="215" y2="75" stroke="#0284C7" stroke-width="5" stroke-linecap="round"/>
+                                    <text x="180" y="25" text-anchor="middle" fill="#0284C7" font-size="10" font-weight="bold">55° Curam (Cepat!)</text>
+                                </svg>
+                            </div>
+                            <h3 class="text-lg font-bold text-slate-800 mb-2">2. Sudut Kemiringan & Gravitasi</h3>
+                            <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                                Mengapa bidang miring yang <strong>curam (sudut besar)</strong> membuat balok meluncur kencang? Karena semakin curam papan luncur, tarikan <strong>gaya gravitasi bumi</strong> yang mendorong balok ke bawah menjadi semakin kuat!
+                            </p>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-amber-100 text-xs font-extrabold text-amber-700">
+                            💡 Sudut makin besar = Kecepatan meluncur makin tinggi!
+                        </div>
+                    </div>
+
+                    <!-- Kartu Konsep 3 -->
+                    <div class="concept-card rounded-3xl border-2 border-emerald-200 bg-gradient-to-b from-emerald-50 to-white p-5 shadow-md flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="px-3 py-1 rounded-full bg-emerald-600 text-white text-xs font-extrabold">Konsep 3</span>
+                                <button onclick="speakText('Bagaimana pengaruh massa benda? Benda yang lebih berat menekan lantai lebih kuat, sehingga nilai Gaya Gesek dalam satuan Newton menjadi lebih besar. Namun benda berat juga memiliki dorongan energi gerak yang lebih besar saat meluncur turun!')" class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 hover:bg-emerald-200 flex items-center justify-center">
+                                    <i class="fa-solid fa-volume-high text-xs"></i>
+                                </button>
+                            </div>
+                            <!-- Visual SVG Massa Benda -->
+                            <div class="bg-white rounded-2xl p-3 border border-emerald-100 mb-3">
+                                <svg viewBox="0 0 240 90" class="w-full h-24">
+                                    <rect x="30" y="38" width="36" height="30" rx="5" fill="#38BDF8"/>
+                                    <text x="48" y="57" text-anchor="middle" fill="#FFF" font-size="10" font-weight="bold">1 kg</text>
+                                    <rect x="135" y="18" width="60" height="50" rx="6" fill="#0284C7"/>
+                                    <text x="165" y="47" text-anchor="middle" fill="#FFF" font-size="12" font-weight="bold">10 kg</text>
+                                    <line x1="15" y1="70" x2="225" y2="70" stroke="#334155" stroke-width="4"/>
+                                </svg>
+                            </div>
+                            <h3 class="text-lg font-bold text-slate-800 mb-2">3. Massa & Tekanan Benda</h3>
+                            <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                                Kotak bermassa <strong>10 kg</strong> menekan lantai lebih kuat daripada kotak <strong>1 kg</strong>. Tekanan yang kuat membuat angka <strong>Gaya Gesek (Newton)</strong> membesar, tetapi energi dorongnya pun besar sehingga kecepatannya hampir seimbang!
+                            </p>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-emerald-100 text-xs font-extrabold text-emerald-700">
+                            💡 Massa memperbesar Gaya Gesek (N) & Energi Gerak!
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAHUKAH KAMU? (KONTEKS KEHIDUPAN SEHARI-HARI) -->
+            <div class="bg-gradient-to-r from-sky-700 to-indigo-800 rounded-3xl p-6 text-white shadow-lg">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="px-3 py-1 rounded-full bg-amber-400 text-slate-900 font-extrabold text-xs uppercase">Tahukah Kamu? • Aplikasi Nyata</span>
+                    <h3 class="text-lg sm:text-xl font-bold">Manfaat Memperbesar & Memperkecil Gaya Gesek dalam Kehidupan</h3>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-white/10 backdrop-blur-sm p-4 rounded-2xl border border-white/20">
+                        <div class="text-2xl mb-1">🛞</div>
+                        <h4 class="font-bold text-amber-300 text-base">1. Alur Ban Mobil & Sepeda</h4>
+                        <p class="text-xs sm:text-sm text-sky-100 mt-1 leading-relaxed">
+                            Ban kendaraan dibuat beralur kasar untuk <strong>memperbesar gaya gesek</strong> dengan jalan aspal agar mobil tidak tergelincir saat mengerem di kala hujan.
+                        </p>
+                    </div>
+                    <div class="bg-white/10 backdrop-blur-sm p-4 rounded-2xl border border-white/20">
+                        <div class="text-2xl mb-1">👟</div>
+                        <h4 class="font-bold text-amber-300 text-base">2. Pul Sepatu Bola & Pendaki</h4>
+                        <p class="text-xs sm:text-sm text-sky-100 mt-1 leading-relaxed">
+                            Bagian bawah sepatu bola diberi tonjolan (*pul*) agar gaya gesek dengan rumput besar, sehingga pemain tidak mudah terpeleset saat berlari kencang.
+                        </p>
+                    </div>
+                    <div class="bg-white/10 backdrop-blur-sm p-4 rounded-2xl border border-white/20">
+                        <div class="text-2xl mb-1">🛝</div>
+                        <h4 class="font-bold text-amber-300 text-base">3. Oli Mesin & Seluncuran Air</h4>
+                        <p class="text-xs sm:text-sm text-sky-100 mt-1 leading-relaxed">
+                            Seluncuran di *waterboom* dialiri air dan rantai sepeda diberi oli untuk <strong>memperkecil gaya gesek</strong> agar gerakan menjadi licin dan lancar!
+                        </p>
+                    </div>
+                </div>
+
+                <div class="mt-5 flex justify-end">
+                    <button onclick="switchPhase(5)" class="btn-bounce px-6 py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-900 font-extrabold text-sm sm:text-base shadow-lg flex items-center gap-2">
+                        <span>Ikuti Tantangan Kuis & Ambil Sertifikat!</span>
+                        <i class="fa-solid fa-medal"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- TAHAP 5: EVALUASI AKM & RAPOR ILMUWAN CILIK (PORTFOLIO & PRINT)     -->
+        <!-- =================================================================== -->
+        <section id="phase-5" class="phase-section hidden space-y-6">
+
+            <!-- BAGIAN KUIS 5 SOAL HOTS/AKM SAINS (NO-PRINT SAAT CETAK SERTIFIKAT) -->
+            <div class="bg-white rounded-3xl p-6 shadow-lg border-2 border-purple-300 no-print">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-5">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-2xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-2xl">
+                            <i class="fa-solid fa-award"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-xl sm:text-2xl font-bold text-slate-800">Evaluasi AKM Sains & Tantangan HOTS</h2>
+                            <p class="text-xs sm:text-sm text-slate-500">Jawab 5 soal berbasis skenario eksperimen di bawah ini untuk mendapatkan Lencana Ilmuwan Ahli!</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="px-4 py-2 rounded-2xl bg-purple-100 text-purple-900 font-extrabold text-sm">
+                            Skor Kuis: <span id="quizScoreBadge">0</span> / 100
+                        </span>
+                        <button onclick="resetQuiz()" class="btn-bounce px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs">
+                            <i class="fa-solid fa-rotate-right mr-1"></i> Ulangi Kuis
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Container 5 Soal Kuis -->
+                <div id="quizContainer" class="space-y-5">
+                    <!-- Dirender oleh JavaScript -->
+                </div>
+            </div>
+
+            <!-- SERTIFIKAT & RAPOR LKPD CETAK 1 HALAMAN A4 -->
+            <div id="certificateArea" class="bg-white rounded-3xl p-6 sm:p-8 shadow-xl border-4 border-sky-500 relative overflow-hidden">
+                <!-- Dekorasi Sudut Sertifikat -->
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-5 border-b-2 border-sky-200">
+                    <div class="flex items-center gap-3">
+                        <div class="w-14 h-14 rounded-2xl bg-sky-600 text-white flex items-center justify-center text-3xl shadow">
+                            <i class="fa-solid fa-user-graduate"></i>
+                        </div>
+                        <div>
+                            <span class="text-xs font-extrabold uppercase tracking-widest text-sky-600">Laporan Portofolio & Sertifikat Laboratorium Maya</span>
+                            <h2 class="text-2xl font-bold text-slate-800">Rapor Ilmuwan Cilik SD (Kurikulum Merdeka)</h2>
+                            <p id="certSchoolName" class="text-xs font-bold text-slate-500">Topik: Gaya Gesek dan Gerak Benda pada Bidang Miring • Fase B (Kelas 4)</p>
+                        </div>
+                    </div>
+
+                    <!-- Badge Gelar Ilmuwan -->
+                    <div class="bg-gradient-to-r from-amber-100 to-yellow-200 border-2 border-amber-400 px-4 py-2.5 rounded-2xl text-center">
+                        <span class="block text-[10px] font-extrabold uppercase text-amber-800">Gelar Capaian</span>
+                        <span id="certBadgeTitle" class="text-base sm:text-lg font-extrabold text-amber-950">🌟 Ilmuwan Muda</span>
+                    </div>
+                </div>
+
+                <!-- Ringkasan Identitas & Skor -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 my-5">
+                    <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200">
+                        <span class="text-[11px] font-bold text-slate-400 block">NAMA ILMUWAN CILIK</span>
+                        <span id="certStudentName" class="font-extrabold text-sm sm:text-base text-slate-800">Belum Diisi</span>
+                    </div>
+                    <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200">
+                        <span class="text-[11px] font-bold text-slate-400 block">KELAS / KELOMPOK</span>
+                        <span id="certStudentClass" class="font-extrabold text-sm sm:text-base text-slate-800">-</span>
+                    </div>
+                    <div class="p-3 rounded-2xl bg-sky-50 border border-sky-200">
+                        <span class="text-[11px] font-bold text-sky-600 block">MISI LAB TERCAPAI</span>
+                        <span id="certMissionStatus" class="font-extrabold text-sm sm:text-base text-sky-900">0 dari 3 Misi</span>
+                    </div>
+                    <div class="p-3 rounded-2xl bg-emerald-50 border border-emerald-200">
+                        <span class="text-[11px] font-bold text-emerald-600 block">SKOR EVALUASI AKM</span>
+                        <span id="certQuizScore" class="font-extrabold text-lg text-emerald-800">0 / 100</span>
+                    </div>
+                </div>
+
+                <!-- Rekap Hipotesis & Kesimpulan Siswa -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs sm:text-sm">
+                        <span class="font-extrabold text-sky-800 block mb-1">1. Hipotesis Awal & Verifikasi:</span>
+                        <p id="certHypothesis" class="text-slate-700 font-semibold italic mb-1">"-"</p>
+                        <span id="certVerdict" class="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-100 text-sky-800">Status: Belum Diverifikasi</span>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs sm:text-sm">
+                        <span class="font-extrabold text-emerald-800 block mb-1">2. Kesimpulan Penyelidikan Siswa:</span>
+                        <p id="certConclusion" class="text-slate-700 font-semibold leading-relaxed">
+                            Siswa belum melengkapi kalimat kesimpulan pada Tahap 3.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Tabel Rekap Data Pengamatan untuk Cetak -->
+                <div class="mb-5">
+                    <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-500 mb-2">3. Rekap Tabel Data Pengamatan LKPD:</h4>
+                    <div class="overflow-x-auto rounded-xl border border-slate-200">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                                    <th class="p-2 text-center">No</th>
+                                    <th class="p-2">Permukaan Lintasan</th>
+                                    <th class="p-2 text-center">Sudut Kemiringan</th>
+                                    <th class="p-2 text-center">Massa Benda</th>
+                                    <th class="p-2 text-center">Waktu Tempuh</th>
+                                    <th class="p-2 text-center">Kecepatan Puncak</th>
+                                    <th class="p-2 text-center">Gaya Gesek</th>
+                                    <th class="p-2 text-center">Jarak Berhenti</th>
+                                </tr>
+                            </thead>
+                            <tbody id="certTableBody" class="divide-y divide-slate-200 font-semibold text-slate-700">
+                                <!-- Diisi otomatis oleh JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Footer Tanda Tangan & Tanggal -->
+                <div class="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-slate-200 text-xs text-slate-500 font-semibold">
+                    <div>
+                        <span>Dicetak dari Laboratorium Maya Interaktif IPAS SD</span> • <span id="certDate">-</span>
+                    </div>
+                    <div class="text-right">
+                        <span>Guru Pembimbing / Sekolah: <strong id="certFooterTeacher" class="text-slate-800">Tim Inovasi EdTech SD</strong></span>
+                    </div>
+                </div>
+
+                <!-- Tombol Aksi Cetak PDF & Unduh CSV (Disembunyikan saat Print) -->
+                <div class="mt-6 pt-4 border-t-2 border-dashed border-slate-200 flex flex-wrap items-center justify-between gap-3 no-print">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button onclick="window.print()" class="btn-bounce px-5 py-3 rounded-2xl bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-sm shadow-md flex items-center gap-2">
+                            <i class="fa-solid fa-print"></i>
+                            <span>Cetak Laporan / Simpan PDF (A4)</span>
+                        </button>
+                        <button onclick="downloadCSV()" class="btn-bounce px-4 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm shadow-md flex items-center gap-2">
+                            <i class="fa-solid fa-file-csv"></i>
+                            <span>Unduh Data CSV</span>
+                        </button>
+                        <button onclick="copySummaryText()" class="btn-bounce px-4 py-3 rounded-2xl bg-amber-100 hover:bg-amber-200 text-amber-900 font-extrabold text-sm border border-amber-300 flex items-center gap-2">
+                            <i class="fa-solid fa-copy"></i>
+                            <span>Salin Ringkasan WA/Classroom</span>
+                        </button>
+                    </div>
+
+                    <button onclick="resetAllData()" class="btn-bounce px-3 py-2 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50">
+                        <i class="fa-solid fa-trash mr-1"></i> Reset Seluruh Data Aplikasi
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="max-w-7xl mx-auto px-6 py-6 text-center text-xs font-bold text-slate-500 no-print">
+        Laboratorium Maya Interaktif SD • Pembelajaran Mendalam (Mindful, Meaningful, Joyful Learning) • Kurikulum Merdeka
+    </footer>
+
+    <!-- ======================================================================= -->
+    <!-- JAVASCRIPT MODULAR: STATE, PHYSICS 60FPS, WEB AUDIO, TTS, LKPD & QUIZ   -->
+    <!-- ======================================================================= -->
+    <script>
+        /***********************************************************************
+         * 1. KONFIGURASI DATA ILMIAH & REACTIVE STATE MANAGEMENT
+         ***********************************************************************/
+        const SURFACES = {
+            ice: {
+                id: 'ice',
+                name: 'Lantai Es',
+                mu: 0.08,
+                rampColor: '#BAE6FD',
+                floorColor: '#E0F2FE',
+                stripeColor: '#38BDF8',
+                particleColor: '#FFFFFF',
+                desc: 'Sangat Licin (Gaya Gesek Sangat Kecil)'
+            },
+            wood: {
+                id: 'wood',
+                name: 'Kayu Halus',
+                mu: 0.20,
+                rampColor: '#FDE68A',
+                floorColor: '#FEF3C7',
+                stripeColor: '#D97706',
+                particleColor: '#F59E0B',
+                desc: 'Agak Halus (Gaya Gesek Sedang)'
+            },
+            asphalt: {
+                id: 'asphalt',
+                name: 'Jalan Aspal',
+                mu: 0.38,
+                rampColor: '#94A3B8',
+                floorColor: '#CBD5E1',
+                stripeColor: '#334155',
+                particleColor: '#475569',
+                desc: 'Agak Kasar (Gaya Gesek Cukup Besar)'
+            },
+            carpet: {
+                id: 'carpet',
+                name: 'Karpet Kasar',
+                mu: 0.58,
+                rampColor: '#FCA5A5',
+                floorColor: '#FEE2E2',
+                stripeColor: '#B91C1C',
+                particleColor: '#EF4444',
+                desc: 'Sangat Kasar (Gaya Gesek Sangat Besar)'
+            }
+        };
+
+        const QUIZ_QUESTIONS = [
+            {
+                id: 1,
+                type: 'Analisis Data Tabel (AKM Numerasi)',
+                question: 'Perhatikan hasil percobaan Raka pada sudut kemiringan 30° berikut: (1) Lantai Es berhenti di 9,2 m; (2) Kayu Halus berhenti di 4,1 m; (3) Karpet Kasar berhenti di 1,4 m. Mengapa pada lintasan Karpet Kasar benda berhenti paling dekat?',
+                options: [
+                    'A. Karena karpet kasar memiliki gaya gesek paling kecil sehingga mempercepat benda',
+                    'B. Karena permukaan karpet kasar menghasilkan gaya gesek paling besar yang melawan arah gerak benda',
+                    'C. Karena karpet kasar menghilangkan gaya gravitasi bumi pada kotak',
+                    'D. Karena sudut kemiringan karpet berubah menjadi 0 derajat'
+                ],
+                correct: 1,
+                explanation: 'Tepat sekali! Permukaan yang kasar seperti karpet memiliki tonjolan yang menghasilkan gaya gesek besar berlawanan arah gerak benda, sehingga benda cepat berhenti.'
+            },
+            {
+                id: 2,
+                type: 'Prediksi Variabel Eksperimen (HOTS)',
+                question: 'Siti melakukan percobaan menggunakan lintasan Kayu Halus. Percobaan pertama menggunakan sudut 20° dan menghasilkan kecepatan puncak 2,9 m/s. Jika Siti mengubah sudut kemiringan menjadi 50° (lebih curam) pada permukaan yang sama, apa yang akan terjadi?',
+                options: [
+                    'A. Kecepatan puncak benda meningkat lebih tinggi dan jarak berhentinya semakin jauh',
+                    'B. Kecepatan puncak benda menjadi lebih lambat karena papan terlalu curam',
+                    'C. Benda langsung berhenti di puncak bidang miring',
+                    'D. Kecepatan puncak dan jarak berhenti tetap sama persis'
+                ],
+                correct: 0,
+                explanation: 'Hebat! Semakin besar (curam) sudut kemiringan bidang miring, semakin besar komponen tarikan gravitasi yang meluncurkan benda, sehingga kecepatannya meningkat dan jarak berhentinya makin jauh.'
+            },
+            {
+                id: 3,
+                type: 'Konsep Gaya & Vektor',
+                question: 'Saat kotak sedang meluncur ke arah KANAN di lantai datar, ke manakah arah panah Gaya Gesek yang bekerja pada bagian bawah kotak tersebut?',
+                options: [
+                    'A. Searah dengan gerak kotak yaitu ke arah KANAN',
+                    'B. Ke arah ATAS mengangkat kotak terbang',
+                    'C. Berlawanan dengan arah gerak kotak yaitu ke arah KIRI',
+                    'D. Tidak memiliki arah karena gaya gesek diam saja'
+                ],
+                correct: 2,
+                explanation: 'Benar! Gaya gesek selalu bekerja berlawanan arah dengan arah gerak benda. Jika benda bergerak ke kanan, gaya gesek menahan ke arah kiri.'
+            },
+            {
+                id: 4,
+                type: 'Studi Kasus Kehidupan Sehari-hari',
+                question: 'Pada musim hujan, jalanan keramik di depan kelas menjadi sangat licin sehingga siswa rawan terpeleset. Tindakan manakah yang menerapkan prinsip MEMPERBESAR gaya gesek agar siswa aman berjalan?',
+                options: [
+                    'A. Menuangkan minyak goreng di atas keramik',
+                    'B. Memasang keset karet yang bertekstur kasar di atas lantai yang licin',
+                    'C. Menggunakan kaus kaki berbahan sutra yang licin saat berlari',
+                    'D. Menyiram lebih banyak air sabun ke atas lantai'
+                ],
+                correct: 1,
+                explanation: 'Cerdas! Memasang keset karet bertekstur kasar akan memperbesar gaya gesek antara alas kaki dan lantai, sehingga siswa tidak mudah terpeleset.'
+            },
+            {
+                id: 5,
+                type: 'Evaluasi Kebenaran Konsep',
+                question: 'Manakah pernyataan di bawah ini yang BENAR mengenai hubungan massa benda, gaya gesek, dan bidang miring?',
+                options: [
+                    'A. Benda bermassa 10 kg menekan lantai lebih kuat sehingga nilai Gaya Gesek (Newton) lebih besar dibanding benda 1 kg',
+                    'B. Benda bermassa 10 kg tidak memiliki gaya gesek sama sekali',
+                    'C. Memperkecil sudut bidang miring akan membuat benda meluncur semakin cepat',
+                    'D. Lantai es memiliki koefisien gesek lebih besar daripada jalan aspal'
+                ],
+                correct: 0,
+                explanation: 'Luar biasa! Semakin besar massa benda (10 kg), semakin besar gaya tekan normal ke permukaan lintasan, sehingga nilai Gaya Gesek dalam satuan Newton (N) ikut membesar.'
+            }
+        ];
+
+        const STORAGE_KEY = 'LAB_MAYA_IPAS_SD_STATE_V1';
+
+        let state = {
+            currentPhase: 1,
+            soundEnabled: true,
+            student: {
+                name: '',
+                className: '',
+                group: '',
+                teacher: 'SDN Inovasi Nusantara'
+            },
+            hypothesis: {
+                id: null,
+                text: '',
+                verdict: ''
+            },
+            sim: {
+                surface: 'wood',
+                angle: 30,
+                mass: 4,
+                slowMo: false,
+                showVectors: true,
+                lastResult: null
+            },
+            missions: {
+                m1: false, // Jarak > 8.0 m
+                m2: false, // Karpet kasar & jarak < 2.5 m
+                m3: false  // Minimal 3 data di LKPD
+            },
+            lkpdData: [],
+            chartMetric: 'distance',
+            conclusions: {
+                c1: '',
+                c2: '',
+                c3: '',
+                c4: '',
+                verified: false
+            },
+            quiz: {
+                answers: {},
+                score: 0
+            }
+        };
+
+        function loadState() {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    state = Object.assign({}, state, parsed);
+                }
+            } catch (e) {
+                console.warn('Gagal memuat state dari localStorage:', e);
+            }
+        }
+
+        function saveState() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+                updateCertificateView();
+            } catch (e) {
+                console.warn('Gagal menyimpan state:', e);
+            }
+        }
+
+        /***********************************************************************
+         * 2. PROCEDURAL WEB AUDIO API SYNTHESIZER (TANPA FILE MP3 EKSTERNAL)
+         ***********************************************************************/
+        let audioCtx = null;
+
+        function getAudioContext() {
+            if (!audioCtx) {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (AudioContextClass) {
+                    audioCtx = new AudioContextClass();
+                }
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        function playPopSound() {
+            if (!state.soundEnabled) return;
+            const ctx = getAudioContext();
+            if (!ctx) return;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(520, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.08);
+            gain.gain.setValueAtTime(0.15, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.09);
+        }
+
+        function playLaunchSound() {
+            if (!state.soundEnabled) return;
+            const ctx = getAudioContext();
+            if (!ctx) return;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(300, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(620, ctx.currentTime + 0.18);
+            gain.gain.setValueAtTime(0.18, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.2);
+        }
+
+        function playChimeSuccess() {
+            if (!state.soundEnabled) return;
+            const ctx = getAudioContext();
+            if (!ctx) return;
+            const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+            notes.forEach((freq, idx) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                const startTime = ctx.currentTime + idx * 0.09;
+                osc.frequency.setValueAtTime(freq, startTime);
+                gain.gain.setValueAtTime(0.18, startTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.28);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(startTime);
+                osc.stop(startTime + 0.29);
+            });
+        }
+
+        function playBuzzerError() {
+            if (!state.soundEnabled) return;
+            const ctx = getAudioContext();
+            if (!ctx) return;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(190, ctx.currentTime);
+            osc.frequency.linearRampToValueAtTime(140, ctx.currentTime + 0.25);
+            gain.gain.setValueAtTime(0.14, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.26);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.27);
+        }
+
+        function toggleSound() {
+            state.soundEnabled = !state.soundEnabled;
+            const icon = document.getElementById('iconSound');
+            const btn = document.getElementById('btnToggleSound');
+            if (state.soundEnabled) {
+                icon.className = 'fa-solid fa-volume-high';
+                btn.classList.replace('bg-slate-200', 'bg-sky-100');
+                playPopSound();
+                showToast('Efek suara diaktifkan!', 'info');
+            } else {
+                icon.className = 'fa-solid fa-volume-xmark';
+                btn.classList.replace('bg-sky-100', 'bg-slate-200');
+                stopSpeech();
+            }
+            saveState();
+        }
+
+        /***********************************************************************
+         * 3. INDONESIAN TEXT-TO-SPEECH (ASISTEN SUARA PROFESOR CILIK)
+         ***********************************************************************/
+        function speakText(text) {
+            if (!('speechSynthesis' in window)) {
+                showToast('Browser ini belum mendukung fitur pembaca suara.', 'warning');
+                return;
+            }
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'id-ID';
+            utterance.rate = 1.0;
+            utterance.pitch = 1.1;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function speakCurrentMascot() {
+            playPopSound();
+            const msg = document.getElementById('mascotMessage').innerText;
+            speakText(msg);
+        }
+
+        function stopSpeech() {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
+        }
+
+        function setMascotMessage(text, autoSpeak = false) {
+            const el = document.getElementById('mascotMessage');
+            if (el) el.innerText = `"${text}"`;
+            if (autoSpeak && state.soundEnabled) {
+                speakText(text);
+            }
+        }
+
+        /***********************************************************************
+         * 4. NAVIGASI 5 FASE & IDENTITAS SISWA
+         ***********************************************************************/
+        function switchPhase(phaseNumber) {
+            playPopSound();
+            state.currentPhase = phaseNumber;
+
+            for (let i = 1; i <= 5; i++) {
+                const sec = document.getElementById(`phase-${i}`);
+                const nav = document.getElementById(`nav-phase-${i}`);
+                if (i === phaseNumber) {
+                    sec.classList.remove('hidden');
+                    nav.className = 'phase-tab btn-bounce flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-2 px-2 rounded-xl font-extrabold text-xs sm:text-sm bg-sky-600 text-white shadow-md transition-all';
+                } else {
+                    sec.classList.add('hidden');
+                    nav.className = 'phase-tab btn-bounce flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-2 px-2 rounded-xl font-bold text-xs sm:text-sm bg-white hover:bg-sky-100 text-slate-700 border border-sky-200 transition-all';
+                }
+            }
+
+            const phaseMessages = {
+                1: 'Halo Ilmuwan Cilik! Isi kartu identitasmu, amati cerita perosotan di taman, lalu pilih 1 hipotesis awalmu ya!',
+                2: 'Ini adalah Meja Eksperimen! Pilih jenis permukaan, atur sudut kemiringan dan massa benda, lalu tekan tombol Luncurkan Benda!',
+                3: 'Di Jurnal LKPD ini, amati tabel dan grafik batang hasil percobaanmu, lalu lengkapi kesimpulan rumpang di bawahnya!',
+                4: 'Mari pahami alasan ilmiah di balik percobaanmu di Pojok Sains! Klik ikon speaker pada kartu untuk mendengarkan penjelasannya.',
+                5: 'Waktunya menguji pemahamanmu pada 5 soal Evaluasi AKM dan mencetak Sertifikat Rapor Ilmuwan Cilik!'
+            };
+            setMascotMessage(phaseMessages[phaseNumber]);
+
+            if (phaseNumber === 2) {
+                setTimeout(() => {
+                    resizeSimCanvas();
+                    drawSimulationScene();
+                }, 50);
+            } else if (phaseNumber === 3) {
+                renderLKPDTable();
+                renderBarChart();
+            } else if (phaseNumber === 5) {
+                renderQuiz();
+                updateCertificateView();
+            }
+
+            saveState();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function saveIdentity() {
+            state.student.name = document.getElementById('inputStudentName').value.trim();
+            state.student.className = document.getElementById('inputStudentClass').value.trim();
+            state.student.group = document.getElementById('inputStudentGroup').value.trim();
+            state.student.teacher = document.getElementById('inputTeacherName').value.trim() || 'SDN Inovasi Nusantara';
+
+            const badgeName = document.getElementById('headerStudentName');
+            if (state.student.name) {
+                badgeName.innerText = state.student.name;
+            } else {
+                badgeName.innerText = 'Ilmuwan Cilik';
+            }
+            saveState();
+        }
+
+        function selectHypothesis(id, text) {
+            playPopSound();
+            state.hypothesis.id = id;
+            state.hypothesis.text = text;
+
+            for (let i = 1; i <= 3; i++) {
+                const card = document.getElementById(`hypo-card-${i}`);
+                const check = card.querySelector('.hypo-check');
+                if (i === id) {
+                    card.className = 'hypo-card btn-bounce text-left p-4 rounded-2xl border-2 border-emerald-500 bg-emerald-50/70 shadow-md transition-all flex flex-col justify-between';
+                    check.className = 'fa-solid fa-circle-check text-xl text-emerald-600 hypo-check';
+                } else {
+                    card.className = 'hypo-card btn-bounce text-left p-4 rounded-2xl border-2 border-slate-200 hover:border-sky-400 bg-slate-50 transition-all flex flex-col justify-between';
+                    check.className = 'fa-solid fa-circle-check text-xl text-slate-300 hypo-check';
+                }
+            }
+
+            const statusBadge = document.getElementById('hypothesisStatusBadge');
+            statusBadge.className = 'px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800';
+            statusBadge.innerText = `Hipotesis ${id === 1 ? 'A' : id === 2 ? 'B' : 'C'} Terpilih ✓`;
+
+            document.getElementById('reviewHypothesisText').innerText = `"${text}"`;
+            showToast('Hipotesis awal berhasil disimpan! Sekarang ayo kita buktikan di Meja Eksperimen.', 'success');
+            saveState();
+        }
+
+        /***********************************************************************
+         * 5. ENGINE FISIKA & ANIMASI KANVAS 60 FPS (BIDANG MIRING & GAYA GESEK)
+         ***********************************************************************/
+        const RAMP_LENGTH = 3.5; // Panjang papan miring (meter)
+        const GRAVITY = 9.8;     // Percepatan gravitasi (m/s^2)
+
+        let simAnimId = null;
+        let simState = {
+            running: false,
+            paused: false,
+            finished: false,
+            phase: 'idle', // 'idle' | 'ramp' | 'floor' | 'stopped'
+            elapsedTime: 0,
+            sRamp: 0,      // Jarak tempuh di bidang miring (0 s.d. RAMP_LENGTH)
+            sFloor: 0,     // Jarak tempuh di lantai datar (meter)
+            currentVel: 0, // Kecepatan saat ini (m/s)
+            maxVel: 0,     // Kecepatan puncak di dasar bidang miring (m/s)
+            frictionForce: 0,
+            particles: [],
+            stuckWarning: false
+        };
+
+        function calculatePhysicsPreview() {
+            const surf = SURFACES[state.sim.surface];
+            const thetaRad = (state.sim.angle * Math.PI) / 180;
+            const mass = state.sim.mass;
+
+            // Gaya Normal di lantai datar & gaya gesek kinetis rata-rata (Newton)
+            const normalFloor = mass * GRAVITY;
+            const frictionNewton = +(surf.mu * normalFloor).toFixed(1);
+
+            // Percepatan di bidang miring: a_ramp = g * (sin(theta) - mu_ramp * cos(theta))
+            // Agar di sudut landai (15°) dan karpet kasar balok tetap bisa bergerak pelan atau tertahan realistis,
+            // koefisien gesek di bidang miring gunakan 0.35 * surf.mu (karena papan peluncur diberi bantalan awal)
+            const muRamp = surf.mu * 0.35;
+            const aRamp = Math.max(0.4, GRAVITY * (Math.sin(thetaRad) - muRamp * Math.cos(thetaRad)));
+
+            // Kecepatan di ujung bawah bidang miring: v_max = sqrt(2 * a_ramp * RAMP_LENGTH)
+            const vMax = Math.sqrt(2 * aRamp * RAMP_LENGTH);
+
+            // Perlambatan di lantai datar akibat gaya gesek permukaan:
+            // Tambahkan sedikit faktor inersia massa agar siswa juga melihat pengaruh kecil massa pada momentum
+            const effectiveMuFloor = surf.mu * (1 - (mass - 1) * 0.012);
+            const aFloor = effectiveMuFloor * GRAVITY;
+
+            // Jarak berhenti di lantai datar: d = v_max^2 / (2 * a_floor)
+            // Skala dikalibrasi agar berada di rentang 0.5 m s.d. 11.5 m yang pas dengan meteran visual SD
+            const rawDist = (vMax * vMax) / (2 * aFloor) * 0.32;
+            const stopDist = Math.min(11.8, Math.max(0.35, rawDist));
+
+            // Waktu tempuh total
+            const tRamp = vMax / aRamp;
+            const tFloor = (2 * stopDist) / vMax;
+            const totalTime = tRamp + tFloor;
+
+            return {
+                aRamp,
+                vMax,
+                stopDist,
+                tRamp,
+                tFloor,
+                totalTime,
+                frictionNewton
+            };
+        }
+
+        function setSurface(surfaceKey) {
+            playPopSound();
+            state.sim.surface = surfaceKey;
+            updateSimControlsUI();
+            resetSimulation(false);
+            const s = SURFACES[surfaceKey];
+            setMascotMessage(`Kamu memilih permukaan ${s.name} (${s.desc}). Sekarang tekan Luncurkan Benda untuk mengamati seberapa jauh kotak meluncur!`);
+            saveState();
+        }
+
+        function updateAngle(val) {
+            state.sim.angle = parseInt(val, 10);
+            document.getElementById('valAngle').innerText = state.sim.angle;
+            resetSimulation(false);
+            saveState();
+        }
+
+        function updateMass(val) {
+            state.sim.mass = parseInt(val, 10);
+            document.getElementById('valMass').innerText = state.sim.mass;
+            resetSimulation(false);
+            saveState();
+        }
+
+        function toggleSlowMotion() {
+            playPopSound();
+            state.sim.slowMo = !state.sim.slowMo;
+            updateSimControlsUI();
+            saveState();
+        }
+
+        function toggleVectors() {
+            playPopSound();
+            state.sim.showVectors = !state.sim.showVectors;
+            updateSimControlsUI();
+            drawSimulationScene();
+            saveState();
+        }
+
+        function updateSimControlsUI() {
+            // Update kartu permukaan
+            Object.keys(SURFACES).forEach(key => {
+                const btn = document.getElementById(`surf-${key}`);
+                if (!btn) return;
+                if (key === state.sim.surface) {
+                    btn.className = 'surf-btn btn-bounce p-3 rounded-2xl border-2 border-sky-600 bg-sky-50 shadow-md text-left transition-all flex flex-col justify-between';
+                } else {
+                    btn.className = 'surf-btn btn-bounce p-3 rounded-2xl border-2 border-slate-200 hover:border-sky-300 bg-white text-left transition-all flex flex-col justify-between';
+                }
+            });
+
+            // Update slider
+            document.getElementById('sliderAngle').value = state.sim.angle;
+            document.getElementById('valAngle').innerText = state.sim.angle;
+            document.getElementById('sliderMass').value = state.sim.mass;
+            document.getElementById('valMass').innerText = state.sim.mass;
+
+            // Badge di atas kanvas
+            const surf = SURFACES[state.sim.surface];
+            document.getElementById('canvasSurfaceBadge').innerText = `Permukaan: ${surf.name} (μ = ${surf.mu.toFixed(2)})`;
+
+            // Slow-Mo UI
+            const slowBadge = document.getElementById('canvasSpeedModeBadge');
+            const btnSlow = document.getElementById('btnSlowMo');
+            if (state.sim.slowMo) {
+                slowBadge.classList.remove('hidden');
+                btnSlow.className = 'btn-bounce px-4 py-3 rounded-2xl bg-purple-600 text-white border-2 border-purple-700 font-extrabold text-sm transition flex items-center gap-1.5 shadow';
+            } else {
+                slowBadge.classList.add('hidden');
+                btnSlow.className = 'btn-bounce px-4 py-3 rounded-2xl bg-purple-100 hover:bg-purple-200 text-purple-900 border-2 border-purple-300 font-extrabold text-sm transition flex items-center gap-1.5';
+            }
+
+            // Vektor Gaya UI
+            const labelVec = document.getElementById('labelToggleVectors');
+            labelVec.innerText = state.sim.showVectors ? 'Panah Gaya: ON' : 'Panah Gaya: OFF';
+
+            // Update nilai gaya gesek awal
+            const preview = calculatePhysicsPreview();
+            document.getElementById('meterFriction').innerText = preview.frictionNewton.toFixed(1);
+        }
+
+        function startSimulation() {
+            playLaunchSound();
+            if (simAnimId) cancelAnimationFrame(simAnimId);
+
+            const phys = calculatePhysicsPreview();
+            simState = {
+                running: true,
+                paused: false,
+                finished: false,
+                phase: 'ramp',
+                elapsedTime: 0,
+                sRamp: 0,
+                sFloor: 0,
+                currentVel: 0,
+                maxVel: 0,
+                frictionForce: phys.frictionNewton,
+                particles: [],
+                physParams: phys
+            };
+
+            document.getElementById('iconPause').className = 'fa-solid fa-pause';
+            document.getElementById('textPause').innerText = 'Jeda';
+
+            let lastTimestamp = performance.now();
+
+            function step(now) {
+                if (!simState.running) return;
+                const rawDt = Math.min(0.05, (now - lastTimestamp) / 1000);
+                lastTimestamp = now;
+
+                if (!simState.paused) {
+                    const timeScale = state.sim.slowMo ? 0.45 : 1.0;
+                    const dt = rawDt * timeScale;
+                    simState.elapsedTime += dt;
+
+                    const p = simState.physParams;
+
+                    if (simState.elapsedTime <= p.tRamp) {
+                        // Fase 1: Meluncur turun di bidang miring
+                        simState.phase = 'ramp';
+                        const ratio = simState.elapsedTime / p.tRamp;
+                        simState.sRamp = RAMP_LENGTH * ratio * ratio;
+                        simState.currentVel = p.vMax * ratio;
+                        simState.maxVel = Math.max(simState.maxVel, simState.currentVel);
+                    } else if (simState.elapsedTime <= p.totalTime) {
+                        // Fase 2: Meluncur & mengerem akibat gaya gesek di lantai datar
+                        simState.phase = 'floor';
+                        simState.sRamp = RAMP_LENGTH;
+                        simState.maxVel = p.vMax;
+                        const tOnFloor = simState.elapsedTime - p.tRamp;
+                        const floorRatio = Math.min(1, tOnFloor / p.tFloor);
+                        // Gerak lurus diperlambat beraturan: s(t) = d * (1 - (1 - t/T)^2)
+                        simState.sFloor = p.stopDist * (1 - Math.pow(1 - floorRatio, 2));
+                        simState.currentVel = p.vMax * (1 - floorRatio);
+
+                        // Tambahkan partikel gesekan
+                        if (Math.random() < 0.65) {
+                            simState.particles.push({
+                                xOffset: (Math.random() - 0.5) * 16,
+                                yOffset: -Math.random() * 10,
+                                vx: -20 - Math.random() * 35,
+                                vy: -15 - Math.random() * 25,
+                                life: 1.0
+                            });
+                        }
+                    } else {
+                        // Selesai & Berhenti Total
+                        simState.phase = 'stopped';
+                        simState.running = false;
+                        simState.finished = true;
+                        simState.sRamp = RAMP_LENGTH;
+                        simState.sFloor = p.stopDist;
+                        simState.currentVel = 0;
+                        simState.maxVel = p.vMax;
+                        simState.elapsedTime = p.totalTime;
+                        onSimulationComplete();
+                    }
+
+                    // Update partikel
+                    simState.particles.forEach(pt => {
+                        pt.xOffset += pt.vx * dt;
+                        pt.yOffset += pt.vy * dt;
+                        pt.life -= dt * 2.4;
+                    });
+                    simState.particles = simState.particles.filter(pt => pt.life > 0);
+
+                    updateTelemetryDisplay();
+                }
+
+                drawSimulationScene();
+                if (simState.running) {
+                    simAnimId = requestAnimationFrame(step);
+                }
+            }
+
+            simAnimId = requestAnimationFrame(step);
+        }
+
+        function pauseSimulation() {
+            if (!simState.running) return;
+            playPopSound();
+            simState.paused = !simState.paused;
+            const icon = document.getElementById('iconPause');
+            const txt = document.getElementById('textPause');
+            if (simState.paused) {
+                icon.className = 'fa-solid fa-play';
+                txt.innerText = 'Lanjut';
+                showToast('Simulasi dijeda. Amati posisi benda dan vektor gayanya!', 'info');
+            } else {
+                icon.className = 'fa-solid fa-pause';
+                txt.innerText = 'Jeda';
+            }
+        }
+
+        function resetSimulation(withSound = true) {
+            if (withSound) playPopSound();
+            if (simAnimId) cancelAnimationFrame(simAnimId);
+            const phys = calculatePhysicsPreview();
+            simState = {
+                running: false,
+                paused: false,
+                finished: false,
+                phase: 'idle',
+                elapsedTime: 0,
+                sRamp: 0,
+                sFloor: 0,
+                currentVel: 0,
+                maxVel: 0,
+                frictionForce: phys.frictionNewton,
+                particles: [],
+                physParams: phys
+            };
+            updateTelemetryDisplay();
+            drawSimulationScene();
+        }
+
+        function updateTelemetryDisplay() {
+            document.getElementById('meterTime').innerText = simState.elapsedTime.toFixed(2);
+            document.getElementById('meterMaxSpeed').innerText = simState.maxVel.toFixed(2);
+            document.getElementById('meterDistance').innerText = simState.sFloor.toFixed(2);
+            document.getElementById('meterFriction').innerText = simState.frictionForce.toFixed(1);
+        }
+
+        function onSimulationComplete() {
+            const surf = SURFACES[state.sim.surface];
+            const dist = +simState.sFloor.toFixed(2);
+            const maxV = +simState.maxVel.toFixed(2);
+            const time = +simState.elapsedTime.toFixed(2);
+
+            state.sim.lastResult = {
+                surfaceId: state.sim.surface,
+                surfaceName: surf.name,
+                mu: surf.mu,
+                angle: state.sim.angle,
+                mass: state.sim.mass,
+                time: time,
+                maxSpeed: maxV,
+                friction: simState.frictionForce,
+                distance: dist
+            };
+
+            const feedbackBox = document.getElementById('liveFeedbackBox');
+            feedbackBox.innerHTML = `
+                <div class="text-emerald-900">
+                    <i class="fa-solid fa-flag-checkered text-emerald-600 mr-1"></i>
+                    <strong>Hasil Percobaan:</strong> Pada <strong>${surf.name}</strong> (Sudut ${state.sim.angle}°, Massa ${state.sim.mass} kg), benda mencapai kecepatan puncak <strong>${maxV} m/s</strong> dan berhenti pada jarak <strong>${dist} meter</strong>! Klik <em>"Rekam ke Jurnal LKPD"</em> untuk menyimpan data ini.
+                </div>
+            `;
+
+            setMascotMessage(`Wah, pada lintasan ${surf.name} dengan sudut ${state.sim.angle} derajat, kotak berhenti pada jarak ${dist} meter! Jangan lupa klik tombol Rekam ke Jurnal LKPD ya!`);
+
+            // Cek Misi 1 & Misi 2 secara otomatis
+            checkLabMissions();
+            saveState();
+        }
+
+        function resizeSimCanvas() {
+            const canvas = document.getElementById('simCanvas');
+            if (!canvas) return;
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width || 720;
+            canvas.height = rect.height || 360;
+        }
+
+        window.addEventListener('resize', () => {
+            if (state.currentPhase === 2) {
+                resizeSimCanvas();
+                drawSimulationScene();
+            }
+        });
+
+        function drawSimulationScene() {
+            const canvas = document.getElementById('simCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const W = canvas.width;
+            const H = canvas.height;
+
+            const surf = SURFACES[state.sim.surface];
+            const angleDeg = state.sim.angle;
+            const theta = (angleDeg * Math.PI) / 180;
+
+            ctx.clearRect(0, 0, W, H);
+
+            // 1. Background Langit & Awan Laboratorium
+            const skyGrad = ctx.createLinearGradient(0, 0, 0, H);
+            skyGrad.addColorStop(0, '#BAE6FD');
+            skyGrad.addColorStop(0.75, '#F0F9FF');
+            skyGrad.addColorStop(1, '#E2E8F0');
+            ctx.fillStyle = skyGrad;
+            ctx.fillRect(0, 0, W, H);
+
+            // Grid halus di latar belakang
+            ctx.strokeStyle = 'rgba(2, 132, 199, 0.08)';
+            ctx.lineWidth = 1;
+            for (let gx = 0; gx < W; gx += 35) {
+                ctx.beginPath();
+                ctx.moveTo(gx, 0);
+                ctx.lineTo(gx, H);
+                ctx.stroke();
+            }
+            for (let gy = 0; gy < H; gy += 35) {
+                ctx.beginPath();
+                ctx.moveTo(0, gy);
+                ctx.lineTo(W, gy);
+                ctx.stroke();
+            }
+
+            // 2. Geometri Bidang Miring & Lantai Datar (0m s.d. 12m)
+            const floorY = H - 62;
+            const rampBaseX = Math.max(155, Math.min(220, W * 0.27));
+            const rampVisualLen = Math.min(175, H * 0.48);
+
+            const rampTopX = rampBaseX - rampVisualLen * Math.cos(theta);
+            const rampTopY = floorY - rampVisualLen * Math.sin(theta);
+
+            const floorEndX = W - 28;
+            const floorPixelWidth = floorEndX - rampBaseX;
+            const maxMeters = 12; // Skala penggaris lantai 0m sampai 12m
+            const pxPerMeter = floorPixelWidth / maxMeters;
+
+            // Gambar penyangga segitiga bidang miring
+            ctx.fillStyle = '#E2E8F0';
+            ctx.strokeStyle = '#64748B';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(rampTopX, rampTopY);
+            ctx.lineTo(rampBaseX, floorY);
+            ctx.lineTo(rampTopX, floorY);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Busur indikator sudut kemiringan theta
+            ctx.beginPath();
+            ctx.arc(rampBaseX, floorY, 42, Math.PI, Math.PI + theta, false);
+            ctx.strokeStyle = '#0284C7';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            ctx.fillStyle = '#0369A1';
+            ctx.font = 'bold 12px Nunito, sans-serif';
+            ctx.fillText(`${angleDeg}°`, rampBaseX - 62, floorY - 10);
+
+            // 3. Gambar Lantai Datar & Tekstur Permukaan
+            ctx.fillStyle = surf.floorColor;
+            ctx.fillRect(rampBaseX, floorY, floorEndX - rampBaseX, 46);
+
+            // Garis permukaan bidang miring & lantai datar
+            ctx.strokeStyle = surf.stripeColor;
+            ctx.lineWidth = 8;
+            ctx.lineCap = 'round';
+            if (state.sim.surface === 'carpet') {
+                ctx.setLineDash([7, 5]);
+            } else if (state.sim.surface === 'asphalt') {
+                ctx.setLineDash([14, 4]);
+            } else {
+                ctx.setLineDash([]);
+            }
+
+            ctx.beginPath();
+            ctx.moveTo(rampTopX, rampTopY);
+            ctx.lineTo(rampBaseX, floorY);
+            ctx.lineTo(floorEndX, floorY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // 4. Penggaris Meteran di Lantai Datar (0m s.d. 12m)
+            ctx.fillStyle = '#1E293B';
+            ctx.font = 'bold 11px Nunito, sans-serif';
+            ctx.textAlign = 'center';
+            for (let m = 0; m <= maxMeters; m++) {
+                const mx = rampBaseX + m * pxPerMeter;
+                ctx.strokeStyle = m % 2 === 0 ? '#0F172A' : '#64748B';
+                ctx.lineWidth = m % 2 === 0 ? 2 : 1;
+                ctx.beginPath();
+                ctx.moveTo(mx, floorY + 4);
+                ctx.lineTo(mx, floorY + (m % 2 === 0 ? 16 : 10));
+                ctx.stroke();
+
+                if (m % 2 === 0 || W > 600) {
+                    ctx.fillText(`${m}m`, mx, floorY + 29);
+                }
+            }
+
+            // Garis batas target Misi 1 (8 meter)
+            const m8X = rampBaseX + 8 * pxPerMeter;
+            ctx.strokeStyle = 'rgba(16, 185, 129, 0.6)';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(m8X, floorY - 75);
+            ctx.lineTo(m8X, floorY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.fillStyle = '#047857';
+            ctx.font = 'bold 10px Nunito, sans-serif';
+            ctx.fillText('Target Misi 1 (8m)', m8X, floorY - 80);
+
+            // 5. Hitung Posisi & Rotasi Kotak Benda
+            const boxSize = 32 + state.sim.mass * 1.4;
+            let boxCenterX = 0;
+            let boxCenterY = 0;
+            let boxAngle = 0;
+
+            if (simState.phase === 'idle' || simState.phase === 'ramp') {
+                const frac = Math.min(1, simState.sRamp / RAMP_LENGTH);
+                const surfX = rampTopX + frac * (rampBaseX - rampTopX);
+                const surfY = rampTopY + frac * (floorY - rampTopY);
+                boxAngle = theta;
+                boxCenterX = surfX + (boxSize / 2) * Math.sin(theta);
+                boxCenterY = surfY - (boxSize / 2) * Math.cos(theta);
+            } else {
+                const surfX = rampBaseX + Math.min(maxMeters, simState.sFloor) * pxPerMeter;
+                const surfY = floorY;
+                boxAngle = 0;
+                boxCenterX = surfX;
+                boxCenterY = surfY - boxSize / 2 - 3;
+            }
+
+            // Gambar partikel gesekan di bawah kotak
+            simState.particles.forEach(pt => {
+                ctx.fillStyle = surf.particleColor;
+                ctx.globalAlpha = Math.max(0, pt.life);
+                ctx.beginPath();
+                ctx.arc(boxCenterX + pt.xOffset, boxCenterY + boxSize / 2 + pt.yOffset, 3.5, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            ctx.globalAlpha = 1.0;
+
+            // 6. Gambar Kotak Benda (Balok Uji Lab)
+            ctx.save();
+            ctx.translate(boxCenterX, boxCenterY);
+            ctx.rotate(boxAngle);
+
+            // Kotak utama
+            const boxGrad = ctx.createLinearGradient(-boxSize / 2, -boxSize / 2, boxSize / 2, boxSize / 2);
+            boxGrad.addColorStop(0, '#F59E0B');
+            boxGrad.addColorStop(1, '#D97706');
+            ctx.fillStyle = boxGrad;
+            ctx.strokeStyle = '#78350F';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.roundRect(-boxSize / 2, -boxSize / 2, boxSize, boxSize, 8);
+            ctx.fill();
+            ctx.stroke();
+
+            // Label Massa di dalam kotak
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = 'bold 12px Fredoka, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(`${state.sim.mass} kg`, 0, 0);
+
+            // 7. Gambar Panah Vektor Gaya (Jika Aktif)
+            if (state.sim.showVectors) {
+                // Panah Hijau: Gaya Dorong / Gerak (Ke Kanan)
+                const forwardLen = 32 + state.sim.angle * 0.5;
+                drawArrow(ctx, boxSize / 2 + 4, 0, boxSize / 2 + forwardLen, 0, '#10B981', 'Gerak');
+
+                // Panah Merah: Gaya Gesek (Berlawanan arah gerak / Ke Kiri)
+                const fricLen = 20 + surf.mu * 55;
+                drawArrow(ctx, -boxSize / 2 - 4, 8, -boxSize / 2 - fricLen, 8, '#EF4444', 'Gaya Gesek');
+            }
+
+            ctx.restore();
+
+            // 8. Bendera Penanda Titik Berhenti Jika Simulasi Selesai
+            if (simState.finished) {
+                const stopX = boxCenterX;
+                const stopY = boxCenterY - boxSize / 2 - 12;
+                ctx.fillStyle = '#0284C7';
+                ctx.beginPath();
+                ctx.roundRect(stopX - 48, stopY - 28, 96, 24, 8);
+                ctx.fill();
+                ctx.fillStyle = '#FFFFFF';
+                ctx.font = 'bold 12px Nunito, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(`Berhenti: ${simState.sFloor.toFixed(2)} m`, stopX, stopY - 13);
+            }
+        }
+
+        function drawArrow(ctx, x1, y1, x2, y2, color, label) {
+            const headLen = 8;
+            const angle = Math.atan2(y2 - y1, x2 - x1);
+            ctx.strokeStyle = color;
+            ctx.fillStyle = color;
+            ctx.lineWidth = 3.5;
+
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(x2, y2);
+            ctx.lineTo(x2 - headLen * Math.cos(angle - Math.PI / 6), y2 - headLen * Math.sin(angle - Math.PI / 6));
+            ctx.lineTo(x2 - headLen * Math.cos(angle + Math.PI / 6), y2 - headLen * Math.sin(angle + Math.PI / 6));
+            ctx.closePath();
+            ctx.fill();
+
+            if (label) {
+                ctx.font = 'bold 10px Nunito, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(label, (x1 + x2) / 2, y1 - 8);
+            }
+        }
+
+        /***********************************************************************
+         * 6. SISTEM AUTO-GRADED MISSIONS & JURNAL PENGAMATAN LKPD
+         ***********************************************************************/
+        function checkLabMissions() {
+            let newlyCompleted = false;
+
+            // Cek Misi 1: Jarak Berhenti > 8.0 m
+            if (!state.missions.m1 && state.sim.lastResult && state.sim.lastResult.distance > 8.0) {
+                state.missions.m1 = true;
+                newlyCompleted = true;
+                showToast('🎉 Misi 1 Selesai: Kamu berhasil meluncurkan benda lebih dari 8 meter!', 'success');
+            }
+
+            // Cek Misi 2: Permukaan Karpet Kasar & Jarak Berhenti < 2.5 m
+            if (!state.missions.m2 && state.sim.lastResult && state.sim.lastResult.surfaceId === 'carpet' && state.sim.lastResult.distance < 2.5) {
+                state.missions.m2 = true;
+                newlyCompleted = true;
+                showToast('🎉 Misi 2 Selesai: Kamu berhasil membuktikan pengereman Karpet Kasar di bawah 2,5 meter!', 'success');
+            }
+
+            // Cek Misi 3: Minimal 3 data terekam di Tabel LKPD
+            if (!state.missions.m3 && state.lkpdData.length >= 3) {
+                state.missions.m3 = true;
+                newlyCompleted = true;
+                showToast('🎉 Misi 3 Selesai: Kamu telah mengumpulkan minimal 3 data pengamatan di LKPD!', 'success');
+            }
+
+            if (newlyCompleted) {
+                playChimeSuccess();
+                launchConfetti();
+            }
+
+            updateMissionsUI();
+            saveState();
+        }
+
+        function updateMissionsUI() {
+            const mList = [state.missions.m1, state.missions.m2, state.missions.m3];
+            let completedCount = 0;
+
+            mList.forEach((done, idx) => {
+                const num = idx + 1;
+                const card = document.getElementById(`mission-card-${num}`);
+                const icon = document.getElementById(`mission-icon-${num}`);
+                const badge = document.getElementById(`mission-badge-${num}`);
+
+                if (done) {
+                    completedCount++;
+                    card.className = 'p-3.5 rounded-2xl border-2 border-emerald-400 bg-emerald-50/80 flex items-start gap-3 transition-all shadow-sm';
+                    icon.className = 'w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold flex-shrink-0 mt-0.5';
+                    icon.innerHTML = '<i class="fa-solid fa-check"></i>';
+                    badge.className = 'text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-200 text-emerald-900';
+                    badge.innerText = 'Tercapai ✓';
+                } else {
+                    card.className = 'p-3.5 rounded-2xl border-2 border-slate-200 bg-slate-50 flex items-start gap-3 transition-all';
+                    icon.className = 'w-8 h-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-bold flex-shrink-0 mt-0.5';
+                    icon.innerText = num;
+                    badge.className = 'text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-600';
+                    badge.innerText = 'Belum';
+                }
+            });
+
+            document.getElementById('headerMissionCount').innerText = `${completedCount}/3`;
+            document.getElementById('lkpdCountBadge').innerText = state.lkpdData.length;
+        }
+
+        function recordToLKPD() {
+            if (!state.sim.lastResult) {
+                // Jika siswa belum klik luncurkan atau langsung klik rekam, hitung dari parameter aktif
+                const phys = calculatePhysicsPreview();
+                const surf = SURFACES[state.sim.surface];
+                state.sim.lastResult = {
+                    surfaceId: state.sim.surface,
+                    surfaceName: surf.name,
+                    mu: surf.mu,
+                    angle: state.sim.angle,
+                    mass: state.sim.mass,
+                    time: +phys.totalTime.toFixed(2),
+                    maxSpeed: +phys.vMax.toFixed(2),
+                    friction: phys.frictionNewton,
+                    distance: +phys.stopDist.toFixed(2)
+                };
+            }
+
+            playPopSound();
+            const entry = Object.assign({ id: Date.now() }, state.sim.lastResult);
+            state.lkpdData.push(entry);
+
+            showToast(`Data Percobaan #${state.lkpdData.length} (${entry.surfaceName}, ${entry.angle}°) berhasil direkam ke LKPD!`, 'success');
+            checkLabMissions();
+            renderLKPDTable();
+            renderBarChart();
+            saveState();
+        }
+
+        function addSampleData() {
+            playPopSound();
+            const samples = [
+                { surface: 'ice', angle: 30, mass: 4 },
+                { surface: 'wood', angle: 30, mass: 4 },
+                { surface: 'asphalt', angle: 30, mass: 4 },
+                { surface: 'carpet', angle: 30, mass: 4 }
+            ];
+
+            const prevSim = Object.assign({}, state.sim);
+            samples.forEach((s, idx) => {
+                state.sim.surface = s.surface;
+                state.sim.angle = s.angle;
+                state.sim.mass = s.mass;
+                const phys = calculatePhysicsPreview();
+                const surfObj = SURFACES[s.surface];
+                state.lkpdData.push({
+                    id: Date.now() + idx,
+                    surfaceId: s.surface,
+                    surfaceName: surfObj.name,
+                    mu: surfObj.mu,
+                    angle: s.angle,
+                    mass: s.mass,
+                    time: +phys.totalTime.toFixed(2),
+                    maxSpeed: +phys.vMax.toFixed(2),
+                    friction: phys.frictionNewton,
+                    distance: +phys.stopDist.toFixed(2)
+                });
+            });
+            state.sim = prevSim;
+
+            checkLabMissions();
+            renderLKPDTable();
+            renderBarChart();
+            showToast('4 Data perbandingan permukaan berhasil ditambahkan ke Tabel & Grafik!', 'info');
+            saveState();
+        }
+
+        function deleteLKPDRow(id) {
+            playPopSound();
+            state.lkpdData = state.lkpdData.filter(item => item.id !== id);
+            document.getElementById('lkpdCountBadge').innerText = state.lkpdData.length;
+            renderLKPDTable();
+            renderBarChart();
+            saveState();
+        }
+
+        function clearLKPD() {
+            playPopSound();
+            state.lkpdData = [];
+            document.getElementById('lkpdCountBadge').innerText = 0;
+            renderLKPDTable();
+            renderBarChart();
+            showToast('Tabel Jurnal Pengamatan telah dikosongkan.', 'info');
+            saveState();
+        }
+
+        function renderLKPDTable() {
+            const tbody = document.getElementById('lkpdTableBody');
+            if (!tbody) return;
+
+            if (state.lkpdData.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="p-6 text-center text-slate-400 font-bold">
+                            Belum ada data percobaan. Silakan lakukan percobaan di <strong>Meja Eksperimen</strong> lalu klik tombol <strong>"Rekam ke Jurnal LKPD"</strong>, atau klik tombol <em>"Isi Contoh Data"</em> di bawah.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = state.lkpdData.map((row, index) => `
+                <tr class="hover:bg-sky-50/70 transition">
+                    <td class="p-3 text-center font-extrabold text-sky-700">${index + 1}</td>
+                    <td class="p-3 font-extrabold text-slate-800">${row.surfaceName}</td>
+                    <td class="p-3 text-center">${row.angle}°</td>
+                    <td class="p-3 text-center">${row.mass} kg</td>
+                    <td class="p-3 text-center text-amber-700 font-bold">${row.maxSpeed.toFixed(2)} m/s</td>
+                    <td class="p-3 text-center text-rose-700 font-bold">${row.friction.toFixed(1)} N</td>
+                    <td class="p-3 text-center text-emerald-700 font-extrabold">${row.distance.toFixed(2)} m</td>
+                    <td class="p-3 text-center">
+                        <button onclick="deleteLKPDRow(${row.id})" class="w-7 h-7 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-600 inline-flex items-center justify-center" title="Hapus baris">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function setChartMetric(metric) {
+            playPopSound();
+            state.chartMetric = metric;
+            renderBarChart();
+            saveState();
+        }
+
+        function renderBarChart() {
+            const metrics = ['distance', 'speed', 'friction'];
+            metrics.forEach(m => {
+                const btn = document.getElementById(`chart-btn-${m}`);
+                if (!btn) return;
+                if (m === state.chartMetric) {
+                    btn.className = 'chart-metric-btn flex-1 py-1.5 px-2 rounded-xl font-extrabold text-xs border-2 border-purple-600 bg-purple-600 text-white shadow transition';
+                } else {
+                    btn.className = 'chart-metric-btn flex-1 py-1.5 px-2 rounded-xl font-extrabold text-xs border-2 border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 transition';
+                }
+            });
+
+            const container = document.getElementById('chartContainer');
+            if (!container) return;
+
+            if (state.lkpdData.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center text-slate-400 font-bold text-xs py-8">
+                        <i class="fa-solid fa-chart-bar text-3xl mb-2 block text-slate-300"></i>
+                        Grafik akan muncul otomatis setelah kamu merekam data percobaan!
+                    </div>
+                `;
+                return;
+            }
+
+            const barColors = {
+                ice: 'bg-sky-500',
+                wood: 'bg-amber-500',
+                asphalt: 'bg-slate-600',
+                carpet: 'bg-rose-500'
+            };
+
+            let maxVal = 1;
+            if (state.chartMetric === 'distance') {
+                maxVal = Math.max(10, ...state.lkpdData.map(d => d.distance));
+            } else if (state.chartMetric === 'speed') {
+                maxVal = Math.max(8, ...state.lkpdData.map(d => d.maxSpeed));
+            } else {
+                maxVal = Math.max(40, ...state.lkpdData.map(d => d.friction));
+            }
+
+            container.innerHTML = state.lkpdData.map((row, idx) => {
+                let val = row.distance;
+                let unit = 'm';
+                if (state.chartMetric === 'speed') {
+                    val = row.maxSpeed;
+                    unit = 'm/s';
+                } else if (state.chartMetric === 'friction') {
+                    val = row.friction;
+                    unit = 'N';
+                }
+                const pct = Math.min(100, Math.max(8, Math.round((val / maxVal) * 100)));
+                const colorClass = barColors[row.surfaceId] || 'bg-sky-500';
+
+                return `
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-xs font-extrabold text-slate-700">
+                            <span>#${idx + 1} ${row.surfaceName} (${row.angle}°, ${row.mass}kg)</span>
+                            <span class="text-purple-800">${val} ${unit}</span>
+                        </div>
+                        <div class="w-full h-5 bg-slate-200 rounded-full overflow-hidden">
+                            <div class="${colorClass} h-full rounded-full transition-all duration-500 flex items-center justify-end pr-2 text-[10px] font-extrabold text-white" style="width: ${pct}%"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function setHypothesisVerdict(verdict) {
+            playPopSound();
+            state.hypothesis.verdict = verdict;
+            const btnTrue = document.getElementById('verdict-true');
+            const btnFix = document.getElementById('verdict-fix');
+
+            if (verdict === 'Terbukti Benar') {
+                btnTrue.className = 'btn-bounce px-4 py-2 rounded-xl border-2 border-emerald-600 bg-emerald-600 text-white font-extrabold text-xs sm:text-sm shadow transition';
+                btnFix.className = 'btn-bounce px-4 py-2 rounded-xl border-2 border-slate-300 bg-white font-extrabold text-xs sm:text-sm transition';
+            } else {
+                btnFix.className = 'btn-bounce px-4 py-2 rounded-xl border-2 border-amber-500 bg-amber-500 text-white font-extrabold text-xs sm:text-sm shadow transition';
+                btnTrue.className = 'btn-bounce px-4 py-2 rounded-xl border-2 border-slate-300 bg-white font-extrabold text-xs sm:text-sm transition';
+            }
+            showToast(`Verifikasi Hipotesis disimpan: "${verdict}"`, 'info');
+            saveState();
+        }
+
+        function saveConclusions() {
+            state.conclusions.c1 = document.getElementById('concl-1').value;
+            state.conclusions.c2 = document.getElementById('concl-2').value;
+            state.conclusions.c3 = document.getElementById('concl-3').value;
+            state.conclusions.c4 = document.getElementById('concl-4').value;
+            saveState();
+        }
+
+        function checkConclusion() {
+            saveConclusions();
+            const { c1, c2, c3, c4 } = state.conclusions;
+            const fb = document.getElementById('conclusionFeedback');
+
+            if (!c1 || !c2 || !c3 || !c4) {
+                playBuzzerError();
+                fb.className = 'text-xs sm:text-sm font-extrabold text-amber-700';
+                fb.innerHTML = '⚠️ Lengkapi keempat kotak pilihan kata pada paragraf kesimpulan terlebih dahulu ya!';
+                return;
+            }
+
+            if (c1 === 'Lantai Es' && c2 === 'kecil' && c3 === 'besar (curam)' && c4 === 'cepat') {
+                state.conclusions.verified = true;
+                playChimeSuccess();
+                launchConfetti();
+                fb.className = 'text-xs sm:text-sm font-extrabold text-emerald-700';
+                fb.innerHTML = '🌟 Luar Biasa! Kesimpulan ilmiahmu 100% TEPAT dan telah tercatat ke dalam Rapor Ilmuwan Cilik!';
+                setMascotMessage('Hebat sekali! Kamu berhasil menyimpulkan hubungan antara kekasaran permukaan, gaya gesek, dan sudut kemiringan dengan sangat tepat!');
+            } else {
+                state.conclusions.verified = false;
+                playBuzzerError();
+                fb.className = 'text-xs sm:text-sm font-extrabold text-rose-600';
+                fb.innerHTML = '🔍 Masih ada kata yang kurang tepat. Ingat: Lantai Es sangat licin (gaya gesek kecil), dan sudut curam membuat benda meluncur cepat!';
+            }
+            saveState();
+        }
+
+        /***********************************************************************
+         * 7. EVALUASI KUIS AKM HOTS & SERTIFIKAT CETAK A4
+         ***********************************************************************/
+        function renderQuiz() {
+            const container = document.getElementById('quizContainer');
+            if (!container) return;
+
+            container.innerHTML = QUIZ_QUESTIONS.map((q, qIdx) => {
+                const selected = state.quiz.answers[q.id];
+                const isAnswered = selected !== undefined;
+
+                const optionsHTML = q.options.map((opt, oIdx) => {
+                    let btnStyle = 'border-slate-200 bg-slate-50 hover:border-purple-400 text-slate-800';
+                    let iconHTML = '';
+
+                    if (isAnswered) {
+                        if (oIdx === q.correct) {
+                            btnStyle = 'border-emerald-500 bg-emerald-50 text-emerald-950 font-extrabold';
+                            iconHTML = '<i class="fa-solid fa-circle-check text-emerald-600 text-lg"></i>';
+                        } else if (oIdx === selected && selected !== q.correct) {
+                            btnStyle = 'border-rose-500 bg-rose-50 text-rose-950 font-bold';
+                            iconHTML = '<i class="fa-solid fa-circle-xmark text-rose-600 text-lg"></i>';
+                        } else {
+                            btnStyle = 'border-slate-200 bg-slate-50 opacity-60';
+                        }
+                    }
+
+                    return `
+                        <button onclick="answerQuiz(${q.id}, ${oIdx})" ${isAnswered ? 'disabled' : ''} class="btn-bounce w-full text-left p-3.5 rounded-2xl border-2 ${btnStyle} transition flex items-center justify-between gap-3 text-xs sm:text-sm font-semibold">
+                            <span>${opt}</span>
+                            ${iconHTML}
+                        </button>
+                    `;
+                }).join('');
+
+                let feedbackHTML = '';
+                if (isAnswered) {
+                    const isCorrect = selected === q.correct;
+                    feedbackHTML = `
+                        <div class="mt-3 p-3.5 rounded-2xl ${isCorrect ? 'bg-emerald-50 border border-emerald-300 text-emerald-900' : 'bg-rose-50 border border-rose-300 text-rose-900'} text-xs sm:text-sm font-semibold">
+                            <span class="font-extrabold">${isCorrect ? '✅ Jawaban Benar!' : '❌ Kurang Tepat.'}</span> ${q.explanation}
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="p-5 rounded-3xl border-2 border-slate-200 bg-white shadow-sm">
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                            <span class="px-3 py-1 rounded-full bg-purple-100 text-purple-800 font-extrabold text-xs">
+                                Soal ${qIdx + 1} • ${q.type}
+                            </span>
+                            <button onclick="speakText('${q.question.replace(/'/g, '')}')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1">
+                                <i class="fa-solid fa-volume-high"></i> Bacakan Soal
+                            </button>
+                        </div>
+                        <p class="font-bold text-slate-800 text-sm sm:text-base mb-4 leading-relaxed">${q.question}</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                            ${optionsHTML}
+                        </div>
+                        ${feedbackHTML}
+                    </div>
+                `;
+            }).join('');
+
+            calculateQuizScore();
+        }
+
+        function answerQuiz(questionId, optionIndex) {
+            if (state.quiz.answers[questionId] !== undefined) return;
+            state.quiz.answers[questionId] = optionIndex;
+
+            const q = QUIZ_QUESTIONS.find(item => item.id === questionId);
+            if (q && optionIndex === q.correct) {
+                playChimeSuccess();
+            } else {
+                playBuzzerError();
+            }
+
+            renderQuiz();
+            saveState();
+
+            if (Object.keys(state.quiz.answers).length === QUIZ_QUESTIONS.length && state.quiz.score >= 80) {
+                launchConfetti();
+                setMascotMessage(`Selamat! Kamu menyelesaikan seluruh soal evaluasi dengan skor ${state.quiz.score}! Sekarang kamu bisa mencetak Sertifikat Rapor Ilmuwan Cilik di bawah.`);
+            }
+        }
+
+        function calculateQuizScore() {
+            let correctCount = 0;
+            QUIZ_QUESTIONS.forEach(q => {
+                if (state.quiz.answers[q.id] === q.correct) {
+                    correctCount++;
+                }
+            });
+            state.quiz.score = correctCount * 20;
+            const badge = document.getElementById('quizScoreBadge');
+            if (badge) badge.innerText = state.quiz.score;
+        }
+
+        function resetQuiz() {
+            playPopSound();
+            state.quiz.answers = {};
+            state.quiz.score = 0;
+            renderQuiz();
+            saveState();
+            showToast('Kuis berhasil di-reset. Silakan kerjakan kembali!', 'info');
+        }
+
+        function updateCertificateView() {
+            document.getElementById('certStudentName').innerText = state.student.name || 'Ilmuwan Cilik (Belum Diisi)';
+            const clsGroup = [state.student.className, state.student.group].filter(Boolean).join(' • ') || '-';
+            document.getElementById('certStudentClass').innerText = clsGroup;
+            document.getElementById('certFooterTeacher').innerText = state.student.teacher || 'SDN Inovasi Nusantara';
+
+            const mCount = [state.missions.m1, state.missions.m2, state.missions.m3].filter(Boolean).length;
+            document.getElementById('certMissionStatus').innerText = `${mCount} dari 3 Misi Tercapai`;
+            document.getElementById('certQuizScore').innerText = `${state.quiz.score} / 100`;
+
+            // Gelar Lencana Ilmuwan
+            let badgeTitle = '🌱 Ilmuwan Pemula';
+            const totalPoints = state.quiz.score + mCount * 15;
+            if (totalPoints >= 110) {
+                badgeTitle = '🏆 Ilmuwan Ahli Utama';
+            } else if (totalPoints >= 70) {
+                badgeTitle = '🌟 Ilmuwan Muda Berbakat';
+            }
+            document.getElementById('certBadgeTitle').innerText = badgeTitle;
+
+            // Hipotesis & Verifikasi
+            document.getElementById('certHypothesis').innerText = state.hypothesis.text ? `"${state.hypothesis.text}"` : '"Belum memilih hipotesis awal"';
+            document.getElementById('certVerdict').innerText = `Verifikasi: ${state.hypothesis.verdict || 'Belum Diverifikasi'}`;
+
+            // Kesimpulan Siswa
+            const { c1, c2, c3, c4 } = state.conclusions;
+            if (c1 && c2 && c3 && c4) {
+                document.getElementById('certConclusion').innerText =
+                    `Permukaan lintasan yang paling licin (${c1}) menghasilkan gaya gesek yang paling ${c2}, sehingga benda meluncur paling cepat dan berhenti paling jauh. Semakin ${c3} sudut kemiringan bidang miring, maka kecepatan luncur benda menjadi semakin ${c4}.`;
+            } else {
+                document.getElementById('certConclusion').innerText = 'Siswa belum melengkapi kalimat kesimpulan terbimbing pada Tahap 3.';
+            }
+
+            // Tabel Rekap di Sertifikat
+            const certTbody = document.getElementById('certTableBody');
+            if (state.lkpdData.length === 0) {
+                certTbody.innerHTML = `<tr><td colspan="8" class="p-3 text-center text-slate-400">Belum ada data pengamatan yang direkam.</td></tr>`;
+            } else {
+                certTbody.innerHTML = state.lkpdData.map((r, i) => `
+                    <tr>
+                        <td class="p-2 text-center">${i + 1}</td>
+                        <td class="p-2">${r.surfaceName} (μ=${r.mu})</td>
+                        <td class="p-2 text-center">${r.angle}°</td>
+                        <td class="p-2 text-center">${r.mass} kg</td>
+                        <td class="p-2 text-center">${r.time.toFixed(2)} s</td>
+                        <td class="p-2 text-center">${r.maxSpeed.toFixed(2)} m/s</td>
+                        <td class="p-2 text-center">${r.friction.toFixed(1)} N</td>
+                        <td class="p-2 text-center font-bold">${r.distance.toFixed(2)} m</td>
+                    </tr>
+                `).join('');
+            }
+
+            // Tanggal Cetak
+            const now = new Date();
+            document.getElementById('certDate').innerText = now.toLocaleDateString('id-ID', {
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+            });
+        }
+
+        function downloadCSV() {
+            playPopSound();
+            let csv = 'No,Nama Siswa,Kelas,Permukaan,Sudut (Derajat),Massa (kg),Waktu (s),Kecepatan Puncak (m/s),Gaya Gesek (N),Jarak Berhenti (m),Skor Kuis\n';
+            const sName = (state.student.name || 'Siswa').replace(/,/g, ' ');
+            const sClass = (state.student.className || '-').replace(/,/g, ' ');
+
+            if (state.lkpdData.length === 0) {
+                csv += `1,${sName},${sClass},Belum Ada Data,0,0,0,0,0,0,${state.quiz.score}\n`;
+            } else {
+                state.lkpdData.forEach((r, idx) => {
+                    csv += `${idx + 1},${sName},${sClass},${r.surfaceName},${r.angle},${r.mass},${r.time},${r.maxSpeed},${r.friction},${r.distance},${state.quiz.score}\n`;
+                });
+            }
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Laporan_Lab_Maya_IPAS_${sName.replace(/\s+/g, '_')}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            showToast('File CSV berhasil diunduh untuk rekap nilai Guru!', 'success');
+        }
+
+        function copySummaryText() {
+            playPopSound();
+            const mCount = [state.missions.m1, state.missions.m2, state.missions.m3].filter(Boolean).length;
+            const summary = [
+                `*LAPORAN LAB MAYA IPAS SD (GAYA GESEK & BIDANG MIRING)*`,
+                `👤 Nama: ${state.student.name || 'Ilmuwan Cilik'}`,
+                `🏫 Kelas: ${state.student.className || '-'} (${state.student.group || '-'})`,
+                `🏆 Misi Lab Selesai: ${mCount}/3 Misi`,
+                `📊 Jumlah Data LKPD: ${state.lkpdData.length} Percobaan`,
+                `💯 Skor Evaluasi AKM: ${state.quiz.score}/100`
+            ].join('\n');
+
+            const tempInput = document.createElement('textarea');
+            tempInput.value = summary;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+
+            showToast('Ringkasan laporan berhasil disalin! Siap ditempel ke WhatsApp atau Google Classroom.', 'success');
+        }
+
+        function resetAllData() {
+            playPopSound();
+            localStorage.removeItem(STORAGE_KEY);
+            location.reload();
+        }
+
+        /***********************************************************************
+         * 8. UTILITAS VISUAL: KONFETI, TOAST NOTIFICATION & FULLSCREEN
+         ***********************************************************************/
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+
+            const colors = {
+                success: 'bg-emerald-600 border-emerald-400 text-white',
+                info: 'bg-sky-700 border-sky-400 text-white',
+                warning: 'bg-amber-500 border-amber-300 text-slate-900'
+            };
+
+            const toast = document.createElement('div');
+            toast.className = `pointer-events-auto px-4 py-3 rounded-2xl border-2 shadow-xl font-bold text-xs sm:text-sm flex items-center justify-between gap-3 transition-all duration-300 ${colors[type] || colors.info}`;
+            toast.innerHTML = `
+                <span>${message}</span>
+                <button onclick="this.parentElement.remove()" class="opacity-80 hover:opacity-100"><i class="fa-solid fa-xmark"></i></button>
+            `;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                if (toast && toast.parentElement) {
+                    toast.style.opacity = '0';
+                    setTimeout(() => toast.remove(), 300);
+                }
+            }, 3800);
+        }
+
+        function launchConfetti() {
+            const canvas = document.getElementById('confettiCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const pieces = Array.from({ length: 70 }, () => ({
+                x: Math.random() * canvas.width,
+                y: -20 - Math.random() * 100,
+                w: 8 + Math.random() * 6,
+                h: 10 + Math.random() * 8,
+                vx: (Math.random() - 0.5) * 4,
+                vy: 3 + Math.random() * 4.5,
+                rot: Math.random() * Math.PI * 2,
+                vRot: (Math.random() - 0.5) * 0.2,
+                color: ['#0284C7', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'][Math.floor(Math.random() * 5)]
+            }));
+
+            let frames = 0;
+            function animateConfetti() {
+                frames++;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                pieces.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.rot += p.vRot;
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate(p.rot);
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+                    ctx.restore();
+                });
+
+                if (frames < 130) {
+                    requestAnimationFrame(animateConfetti);
+                } else {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+            }
+            requestAnimationFrame(animateConfetti);
+        }
+
+        function toggleFullscreen() {
+            playPopSound();
+            const icon = document.getElementById('iconFullscreen');
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {
+                    showToast('Mode layar penuh tidak diizinkan oleh frame browser ini.', 'warning');
+                });
+                icon.className = 'fa-solid fa-compress';
+            } else {
+                document.exitFullscreen();
+                icon.className = 'fa-solid fa-expand';
+            }
+        }
+
+        /***********************************************************************
+         * 9. INISIALISASI SAAT HALAMAN DIMUAT (WINDOW ONLOAD)
+         ***********************************************************************/
+        window.onload = function () {
+            loadState();
+
+            // Pulihkan input identitas
+            document.getElementById('inputStudentName').value = state.student.name || '';
+            document.getElementById('inputStudentClass').value = state.student.className || '';
+            document.getElementById('inputStudentGroup').value = state.student.group || '';
+            document.getElementById('inputTeacherName').value = state.student.teacher || 'SDN Inovasi Nusantara';
+            if (state.student.name) {
+                document.getElementById('headerStudentName').innerText = state.student.name;
+            }
+
+            // Pulihkan hipotesis
+            if (state.hypothesis.id) {
+                selectHypothesis(state.hypothesis.id, state.hypothesis.text);
+            }
+            if (state.hypothesis.verdict) {
+                setHypothesisVerdict(state.hypothesis.verdict);
+            }
+
+            // Pulihkan dropdown kesimpulan
+            if (state.conclusions.c1) document.getElementById('concl-1').value = state.conclusions.c1;
+            if (state.conclusions.c2) document.getElementById('concl-2').value = state.conclusions.c2;
+            if (state.conclusions.c3) document.getElementById('concl-3').value = state.conclusions.c3;
+            if (state.conclusions.c4) document.getElementById('concl-4').value = state.conclusions.c4;
+
+            // Pulihkan UI Simulasi & Misi
+            updateSimControlsUI();
+            updateMissionsUI();
+            resetSimulation(false);
+            renderLKPDTable();
+            renderBarChart();
+            renderQuiz();
+            updateCertificateView();
+
+            // Buka fase terakhir
+            switchPhase(state.currentPhase || 1);
+        };
+    </script>
+</body>
+</html>
